@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum Protocol | 90-Day System</title>
+    
+    <!-- TAILWIND CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- ALPINE.JS (For Interactivity) -->
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- FONT AWESOME -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- GOOGLE FONTS -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        lumenis: { primary: '#008B9E', secondary: '#4DD0E1', dark: '#006064' },
+                        brand: { navy: '#1B2A41', fire: '#FF5733', purple: '#6366f1' }
+                    },
+                    fontFamily: {
+                        sans: ['Open Sans', 'sans-serif'],
+                        header: ['Montserrat', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        [x-cloak] { display: none !important; }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #1B2A41;
+            cursor: pointer;
+            margin-top: -8px;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #cbd5e1;
+            border-radius: 2px;
+        }
+    </style>
+
+    <!-- APP LOGIC (Global Function Pattern) -->
+    <script>
+        function quantumProtocolApp() {
+            return {
+                activeTab: 'vision',
+                
+                // Data Models
+                vision: JSON.parse(localStorage.getItem('qp_vision')) || {},
+                goals: JSON.parse(localStorage.getItem('qp_goals')) || [
+                    { title: '', why: '', progress: 0 },
+                    { title: '', why: '', progress: 0 },
+                    { title: '', why: '', progress: 0 }
+                ],
+                onePercentList: JSON.parse(localStorage.getItem('qp_one_percent')) || {},
+                journalEntries: JSON.parse(localStorage.getItem('qp_journal')) || {},
+                
+                // Temp Input for 1% Tasks
+                newTaskInput: { 0: '', 1: '', 2: '' },
+
+                // Timeblocking Hours
+                hours: [
+                    "5:00 AM", "6:00 AM", "7:00 AM", "8:00 AM", "9:00 AM", "10:00 AM", "11:00 AM", "12:00 PM",
+                    "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM", "5:00 PM", "6:00 PM", "7:00 PM", "8:00 PM",
+                    "9:00 PM", "10:00 PM", "11:00 PM", "12:00 AM"
+                ],
+
+                // Current Journal Entry State
+                currentEntry: null,
+                todayDate: new Date().toISOString().split('T')[0],
+
+                // Static Data
+                visionCards: [
+                    { id: 'why', title: 'My Ultimate Why', icon: 'fa-solid fa-bullseye', colorClass: 'bg-red-100 text-red-500', desc: 'What pushes you when things get hard?' },
+                    { id: 'motivation', title: 'Core Motivation', icon: 'fa-solid fa-bolt', colorClass: 'bg-yellow-100 text-yellow-500', desc: 'What energy source are you tapping into?' },
+                    { id: 'legacy', title: 'My Legacy', icon: 'fa-solid fa-trophy', colorClass: 'bg-purple-100 text-purple-500', desc: 'How do you want to be remembered?' },
+                    { id: 'vision', title: 'The 90-Day Vision', icon: 'fa-regular fa-calendar-check', colorClass: 'bg-blue-100 text-blue-500', desc: 'Success 90 days from today.' },
+                ],
+
+                // Initialization
+                init() {
+                    // Initialize Today's Journal
+                    if (!this.journalEntries[this.todayDate]) {
+                        this.journalEntries[this.todayDate] = {
+                            date: this.todayDate,
+                            tasks: [
+                                { done: false, text: '' },
+                                { done: false, text: '' },
+                                { done: false, text: '' }
+                            ],
+                            timeblocks: {},
+                            notes: ''
+                        };
+                    }
+                    this.currentEntry = this.journalEntries[this.todayDate];
+                    
+                    // Setup Watchers for Auto-Save
+                    this.$watch('vision', val => localStorage.setItem('qp_vision', JSON.stringify(val)));
+                    this.$watch('goals', val => localStorage.setItem('qp_goals', JSON.stringify(val)));
+                    this.$watch('onePercentList', val => localStorage.setItem('qp_one_percent', JSON.stringify(val)));
+                    this.$watch('currentEntry', val => {
+                        this.journalEntries[this.todayDate] = val;
+                        localStorage.setItem('qp_journal', JSON.stringify(this.journalEntries));
+                    });
+                },
+
+                // Helper Functions
+                getGoalColor(index) {
+                    return index === 0 ? 'bg-lumenis-primary' : index === 1 ? 'bg-lumenis-secondary' : 'bg-brand-purple';
+                },
+                getGoalBorderColor(index) {
+                    return index === 0 ? 'border-lumenis-primary' : index === 1 ? 'border-lumenis-secondary' : 'border-brand-purple';
+                },
+                getGoalPlaceholder(index) {
+                    if(index === 0) return "e.g. Close $200k Revenue";
+                    if(index === 1) return "e.g. Run a Marathon";
+                    return "e.g. Read 10 Books";
+                },
+                getTodayDate() {
+                    return new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+                },
+                
+                // 1% Tasks Logic
+                addTask(goalIndex) {
+                    const text = this.newTaskInput[goalIndex];
+                    if (!text) return;
+                    if (!this.onePercentList[goalIndex]) this.onePercentList[goalIndex] = [];
+                    this.onePercentList[goalIndex].push({ text: text, used: false });
+                    this.newTaskInput[goalIndex] = ''; // Clear input
+                },
+                removeTask(goalIndex, taskIndex) {
+                    this.onePercentList[goalIndex].splice(taskIndex, 1);
+                },
+
+                // Journal Logic
+                toggleJournalTask(idx) {
+                    this.currentEntry.tasks[idx].done = !this.currentEntry.tasks[idx].done;
+                },
+                getTimeblock(hour) {
+                    // Ensure timeblock object exists
+                    if (!this.currentEntry.timeblocks[hour]) {
+                        this.currentEntry.timeblocks[hour] = { text: '', done: false };
+                    }
+                    return this.currentEntry.timeblocks[hour];
+                },
+                toggleTimeblock(hour) {
+                    this.getTimeblock(hour).done = !this.getTimeblock(hour).done;
+                },
+
+                // Stats Logic
+                getStats() {
+                    const entries = Object.values(this.journalEntries);
+                    const daysLogged = entries.length;
+                    const totalTasks = entries.reduce((acc, entry) => acc + entry.tasks.length, 0);
+                    const completedTasks = entries.reduce((acc, entry) => acc + entry.tasks.filter(t => t.done).length, 0);
+                    const completionRate = totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100);
+                    return { daysLogged, completedTasks, completionRate };
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-50 text-slate-700 antialiased min-h-screen flex flex-col font-sans"
+      x-data="quantumProtocolApp()">
+
+    <!-- NAVIGATION -->
+    <nav class="bg-brand-navy text-white p-4 sticky top-0 z-50 shadow-xl border-b border-slate-700">
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-lumenis-primary to-brand-purple rounded-lg flex items-center justify-center font-black text-xl shadow-lg">
+                    QP
+                </div>
+                <div>
+                    <h1 class="font-header font-bold text-lg tracking-tight leading-none">Quantum Protocol</h1>
+                    <p class="text-[10px] text-slate-400 font-bold tracking-wider uppercase mt-1">90-Day High Performance System</p>
+                </div>
+            </div>
+            
+            <div class="flex bg-slate-800 p-1 rounded-lg overflow-x-auto w-full md:w-auto no-scrollbar">
+                <template x-for="tab in ['vision', 'goals', 'tasks', 'journal', 'review']">
+                    <button @click="activeTab = tab"
+                            :class="activeTab === tab ? 'bg-white text-brand-navy shadow-md transform scale-105' : 'text-slate-400 hover:text-white hover:bg-slate-700'"
+                            class="px-4 py-2 rounded-md text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap flex-1 md:flex-none">
+                        <span x-text="tab === 'tasks' ? '1% Tasks' : tab"></span>
+                    </button>
+                </template>
+                <a href="index.html" class="px-4 py-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-md text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap flex items-center gap-1">
+                    <i class="fa-solid fa-right-from-bracket"></i> Exit
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-grow p-4 md:p-8 mt-4">
+        <div class="max-w-6xl mx-auto">
+
+            <!-- 1. VISION BOARD -->
+            <div x-show="activeTab === 'vision'" x-transition.opacity class="space-y-8">
+                <div class="text-center max-w-2xl mx-auto mb-10">
+                    <h2 class="text-3xl font-header font-black text-brand-navy mb-3">Define Your North Star</h2>
+                    <p class="text-slate-500">"He who has a why to live can bear almost any how." — Nietzsche. Define your foundation before you build your goals.</p>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-6">
+                    <template x-for="card in visionCards">
+                        <div class="bg-white p-6 rounded-xl shadow-lg border border-slate-100 hover:border-lumenis-secondary transition-colors group">
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="w-10 h-10 rounded-lg flex items-center justify-center text-xl transition-colors"
+                                     :class="card.colorClass">
+                                    <i :class="card.icon"></i>
+                                </div>
+                                <h3 class="font-header font-bold text-lg text-brand-navy" x-text="card.title"></h3>
+                            </div>
+                            <p class="text-xs text-slate-400 mb-3 font-bold uppercase tracking-wide" x-text="card.desc"></p>
+                            <textarea x-model="vision[card.id]" placeholder="Write deeply here..."
+                                      class="w-full h-32 p-4 bg-slate-50 rounded-lg border border-slate-200 focus:border-lumenis-primary focus:ring-2 focus:ring-lumenis-secondary/20 outline-none text-slate-700 text-sm leading-relaxed resize-none transition-all"></textarea>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- 2. GOAL ARCHITECT -->
+            <div x-show="activeTab === 'goals'" x-cloak x-transition.opacity class="space-y-8">
+                <div class="text-center max-w-2xl mx-auto mb-10">
+                    <h2 class="text-3xl font-header font-black text-brand-navy mb-3">The 3 Pillars</h2>
+                    <p class="text-slate-500">Set 3 SMART goals for the next 90 days. Be specific. Rate your current proximity to achieving them.</p>
+                </div>
+
+                <div class="grid lg:grid-cols-3 gap-6">
+                    <template x-for="(goal, index) in goals" :key="index">
+                        <div class="bg-white rounded-xl shadow-xl overflow-hidden border border-slate-100 flex flex-col h-full">
+                            <div class="h-2 w-full" :class="getGoalColor(index)"></div>
+                            <div class="p-6 flex-grow flex flex-col gap-4">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs font-black text-slate-300 uppercase tracking-widest" x-text="'Goal 0' + (index + 1)"></span>
+                                    <i class="fa-solid fa-bullseye text-slate-300"></i>
+                                </div>
+                                
+                                <div>
+                                    <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Objective</label>
+                                    <input type="text" x-model="goal.title" :placeholder="getGoalPlaceholder(index)"
+                                           class="w-full p-3 bg-slate-50 rounded-lg border-none focus:ring-2 focus:ring-lumenis-secondary/50 font-bold text-brand-navy placeholder-slate-300 outline-none">
+                                </div>
+
+                                <div>
+                                    <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">The "Why"</label>
+                                    <textarea x-model="goal.why" placeholder="Why does this matter?"
+                                              class="w-full h-20 p-3 bg-slate-50 rounded-lg border-none focus:ring-2 focus:ring-lumenis-secondary/50 text-sm text-slate-600 resize-none placeholder-slate-300 outline-none"></textarea>
+                                </div>
+
+                                <div class="mt-auto pt-6 border-t border-slate-100">
+                                    <div class="flex justify-between text-xs font-bold text-slate-500 mb-2">
+                                        <span>Current Progress</span>
+                                        <span x-text="goal.progress + '/10'"></span>
+                                    </div>
+                                    <input type="range" min="0" max="10" x-model="goal.progress" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- 3. 1% TASKS (Brainstorm) -->
+            <div x-show="activeTab === 'tasks'" x-cloak x-transition.opacity class="space-y-8">
+                <div class="text-center max-w-2xl mx-auto mb-10">
+                    <h2 class="text-3xl font-header font-black text-brand-navy mb-3">The 1% Inventory</h2>
+                    <p class="text-slate-500">Brainstorm small, actionable steps for each goal. When you journal daily, you can pull ideas from this list.</p>
+                </div>
+
+                <div class="grid lg:grid-cols-3 gap-6">
+                    <template x-for="(goal, index) in goals" :key="index">
+                        <div class="bg-white rounded-xl shadow-xl overflow-hidden border border-slate-100 flex flex-col h-full">
+                            <div class="h-2 w-full" :class="getGoalColor(index)"></div>
+                            <div class="p-6 flex-grow flex flex-col gap-4">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-xs font-black text-slate-400 uppercase tracking-widest" x-text="'Goal 0' + (index + 1) + ' Tasks'"></span>
+                                    <i class="fa-solid fa-list text-slate-300"></i>
+                                </div>
+                                <h3 class="font-bold text-lg text-brand-navy mb-2 truncate" x-text="goal.title || 'Untitled Goal'"></h3>
+                                
+                                <!-- Input -->
+                                <div class="flex gap-2">
+                                    <input type="text" placeholder="Add a 1% task..." x-model="newTaskInput[index]" @keydown.enter="addTask(index)"
+                                           class="flex-grow p-2 bg-slate-50 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-lumenis-primary">
+                                    <button @click="addTask(index)" class="bg-slate-100 text-slate-600 p-2 rounded-lg hover:bg-slate-200">
+                                        <i class="fa-solid fa-plus"></i>
+                                    </button>
+                                </div>
+
+                                <!-- List -->
+                                <div class="space-y-2 max-h-64 overflow-y-auto pr-1">
+                                    <template x-for="(task, tIndex) in (onePercentList[index] || [])" :key="tIndex">
+                                        <div class="flex justify-between items-center bg-slate-50 p-3 rounded-lg border border-slate-100 group">
+                                            <span class="text-sm text-slate-700" x-text="task.text"></span>
+                                            <button @click="removeTask(index, tIndex)" class="text-slate-300 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all">
+                                                <i class="fa-solid fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </template>
+                                    <div x-show="!onePercentList[index] || onePercentList[index].length === 0" class="text-xs text-slate-400 text-center italic py-4">
+                                        No tasks added yet.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- 4. JOURNAL (Daily Log) -->
+            <div x-show="activeTab === 'journal'" x-cloak x-transition.opacity class="space-y-8">
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-header font-black text-brand-navy mb-2">The 1% Engine</h2>
+                    <p class="text-slate-500">Small steps, compounded daily. What are the 3 non-negotiables for today?</p>
+                    <div class="mt-4 inline-block bg-blue-50 text-blue-600 px-4 py-1 rounded-full text-xs font-bold uppercase tracking-widest" x-text="getTodayDate()"></div>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-8 items-start">
+                    <!-- Left: 1% Tasks -->
+                    <div class="space-y-6">
+                        <h3 class="font-bold text-brand-navy text-lg flex items-center gap-2">
+                            <i class="fa-solid fa-bullseye text-lumenis-primary"></i> Daily Non-Negotiables
+                        </h3>
+                        <div class="space-y-4">
+                            <template x-for="(task, idx) in currentEntry.tasks" :key="idx">
+                                <div class="relative bg-white p-4 rounded-xl shadow-md border-l-4 transition-all duration-300"
+                                     :class="task.done ? 'border-green-500 opacity-75' : getGoalBorderColor(idx)">
+                                    <div class="flex items-start gap-4">
+                                        <div class="mt-1">
+                                            <button @click="toggleJournalTask(idx)"
+                                                    class="w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors"
+                                                    :class="task.done ? 'bg-green-500 border-green-500 text-white' : 'border-slate-300 text-transparent hover:border-slate-400'">
+                                                <i class="fa-solid fa-check text-xs"></i>
+                                            </button>
+                                        </div>
+                                        <div class="flex-grow">
+                                            <div class="flex justify-between mb-2">
+                                                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400" x-text="'Linked to: ' + (goals[idx].title || 'Goal ' + (idx + 1))"></span>
+                                            </div>
+                                            <input type="text" x-model="task.text" placeholder="What is the 1% improvement?"
+                                                   class="w-full bg-transparent border-none p-0 text-slate-800 font-medium placeholder-slate-300 focus:ring-0 outline-none"
+                                                   :class="task.done ? 'line-through text-slate-400' : ''">
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- Reflection -->
+                        <div class="bg-white p-6 rounded-xl shadow-lg border border-slate-100 mt-8">
+                            <h3 class="font-bold text-brand-navy mb-4 flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-brand-navy"></span> Daily Reflection
+                            </h3>
+                            <textarea x-model="currentEntry.notes" placeholder="What went well? What did you learn? Brain dump your thoughts here..."
+                                      class="w-full h-48 p-4 bg-slate-50 rounded-lg border-none focus:ring-2 focus:ring-slate-200 text-sm text-slate-600 resize-none outline-none"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Right: Timeblocking -->
+                    <div class="bg-white p-6 rounded-xl shadow-lg border border-slate-100">
+                        <h3 class="font-bold text-brand-navy text-lg mb-6 flex items-center gap-2">
+                            <i class="fa-regular fa-clock text-brand-purple"></i> Timeblocking
+                        </h3>
+                        <div class="space-y-2">
+                            <template x-for="hour in hours" :key="hour">
+                                <div class="flex items-center gap-3 group">
+                                    <span class="text-xs font-bold text-slate-400 w-16 text-right" x-text="hour"></span>
+                                    <div class="flex-grow flex items-center gap-3 p-2 rounded-lg border transition-all"
+                                         :class="getTimeblock(hour).done ? 'bg-slate-50 border-slate-200' : 'bg-white border-slate-100 hover:border-slate-300'">
+                                        <button @click="toggleTimeblock(hour)"
+                                                class="w-5 h-5 rounded border-2 flex items-center justify-center transition-colors flex-shrink-0"
+                                                :class="getTimeblock(hour).done ? 'bg-slate-400 border-slate-400 text-white' : 'border-slate-200 text-transparent hover:border-slate-400'">
+                                            <i class="fa-solid fa-check text-[10px]"></i>
+                                        </button>
+                                        <input type="text" x-model="getTimeblock(hour).text" placeholder="Focus block..."
+                                               class="w-full bg-transparent border-none p-0 text-sm text-slate-700 placeholder-slate-300 focus:ring-0 outline-none"
+                                               :class="getTimeblock(hour).done ? 'line-through text-slate-400' : ''">
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. REVIEW -->
+            <div x-show="activeTab === 'review'" x-cloak x-transition.opacity class="max-w-4xl mx-auto text-center space-y-12">
+                <div>
+                    <h2 class="text-3xl font-header font-black text-brand-navy mb-2">Weekly Pulse</h2>
+                    <p class="text-slate-500">Your consistency score over time.</p>
+                </div>
+
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    <div class="bg-white p-6 rounded-2xl shadow-lg border border-slate-100">
+                        <div class="text-4xl font-black text-lumenis-primary mb-2" x-text="getStats().daysLogged"></div>
+                        <div class="text-xs font-bold uppercase tracking-wider text-slate-400">Days Logged</div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-lg border border-slate-100">
+                        <div class="text-4xl font-black text-green-500 mb-2" x-text="getStats().completedTasks"></div>
+                        <div class="text-xs font-bold uppercase tracking-wider text-slate-400">1% Wins</div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-lg border border-slate-100">
+                        <div class="text-4xl font-black text-brand-purple mb-2" x-text="getStats().completionRate + '%'"></div>
+                        <div class="text-xs font-bold uppercase tracking-wider text-slate-400">Execution Rate</div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-lg border border-slate-100">
+                        <div class="text-4xl font-black text-brand-fire mb-2" x-text="90 - getStats().daysLogged"></div>
+                        <div class="text-xs font-bold uppercase tracking-wider text-slate-400">Days Left</div>
+                    </div>
+                </div>
+
+                <div x-show="getStats().daysLogged === 0" class="p-12 bg-slate-50 rounded-xl border border-dashed border-slate-300">
+                    <p class="text-slate-400 font-medium">No data yet. Start your first journal entry!</p>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="text-center py-8 text-slate-400 text-xs font-bold uppercase tracking-widest">
+        Quantum Protocol &copy; 2025
+    </footer>
+
+</body>
+</html>
