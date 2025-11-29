@@ -32,137 +32,6 @@
                 }
             }
         }
-
-        // Global Function Pattern (Fixes ReferenceErrors)
-        function quantumApp() {
-            return {
-                activeTab: 'vision',
-                
-                // Data Models (Lazy Load)
-                vision: JSON.parse(localStorage.getItem('qp_vision')) || {},
-                goals: JSON.parse(localStorage.getItem('qp_goals')) || [
-                    { title: '', why: '', progress: 0 },
-                    { title: '', why: '', progress: 0 },
-                    { title: '', why: '', progress: 0 }
-                ],
-                onePercentList: JSON.parse(localStorage.getItem('qp_one_percent')) || {},
-                journalEntries: JSON.parse(localStorage.getItem('qp_journal')) || {},
-                
-                // Temp Input for 1% Tasks
-                newTaskInput: { 0: '', 1: '', 2: '' },
-
-                // Timeblocking Hours
-                hours: [
-                    "5:00 AM", "6:00 AM", "7:00 AM", "8:00 AM", "9:00 AM", "10:00 AM", "11:00 AM", "12:00 PM",
-                    "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM", "5:00 PM", "6:00 PM", "7:00 PM", "8:00 PM",
-                    "9:00 PM", "10:00 PM", "11:00 PM", "12:00 AM"
-                ],
-
-                // Current Journal Entry State
-                currentEntry: null,
-                todayDate: new Date().toISOString().split('T')[0],
-
-                // Static Data
-                visionCards: [
-                    { id: 'why', title: 'My Ultimate Why', icon: 'fa-solid fa-bullseye', colorClass: 'bg-red-100 text-red-500', desc: 'What pushes you when things get hard?' },
-                    { id: 'motivation', title: 'Core Motivation', icon: 'fa-solid fa-bolt', colorClass: 'bg-yellow-100 text-yellow-500', desc: 'What energy source are you tapping into?' },
-                    { id: 'legacy', title: 'My Legacy', icon: 'fa-solid fa-trophy', colorClass: 'bg-purple-100 text-purple-500', desc: 'How do you want to be remembered?' },
-                    { id: 'vision', title: 'The 90-Day Vision', icon: 'fa-regular fa-calendar-check', colorClass: 'bg-blue-100 text-blue-500', desc: 'Success 90 days from today.' },
-                ],
-
-                // Initialization
-                init() {
-                    // Initialize Today's Journal
-                    if (!this.journalEntries[this.todayDate]) {
-                        this.journalEntries[this.todayDate] = {
-                            date: this.todayDate,
-                            tasks: [
-                                { done: false, text: '' },
-                                { done: false, text: '' },
-                                { done: false, text: '' }
-                            ],
-                            timeblocks: {},
-                            notes: ''
-                        };
-                    }
-                    this.currentEntry = this.journalEntries[this.todayDate];
-                    
-                    // Setup Watchers for Auto-Save
-                    this.$watch('vision', val => localStorage.setItem('qp_vision', JSON.stringify(val)));
-                    this.$watch('goals', val => localStorage.setItem('qp_goals', JSON.stringify(val)));
-                    this.$watch('onePercentList', val => localStorage.setItem('qp_one_percent', JSON.stringify(val)));
-                    this.$watch('currentEntry', val => {
-                        this.journalEntries[this.todayDate] = val;
-                        localStorage.setItem('qp_journal', JSON.stringify(this.journalEntries));
-                    });
-                },
-
-                // Helper Functions
-                getGoalColor(index) {
-                    return index === 0 ? 'bg-lumenis-primary' : index === 1 ? 'bg-lumenis-secondary' : 'bg-brand-purple';
-                },
-                getGoalBorderColor(index) {
-                    return index === 0 ? 'border-lumenis-primary' : index === 1 ? 'border-lumenis-secondary' : 'border-brand-purple';
-                },
-                getGoalPlaceholder(index) {
-                    if(index === 0) return "e.g. Close $200k Revenue";
-                    if(index === 1) return "e.g. Run a Marathon";
-                    return "e.g. Read 10 Books";
-                },
-                getTodayDate() {
-                    const options = { weekday: 'long', month: 'long', day: 'numeric' };
-                    return new Date().toLocaleDateString('en-US', options);
-                },
-                
-                // 1% Tasks Logic
-                addTask(goalIndex) {
-                    const text = this.newTaskInput[goalIndex];
-                    if (!text) return;
-                    if (!this.onePercentList[goalIndex]) this.onePercentList[goalIndex] = [];
-                    this.onePercentList[goalIndex].push({ text: text, used: false });
-                    this.newTaskInput[goalIndex] = ''; // Clear input
-                },
-                removeTask(goalIndex, taskIndex) {
-                    this.onePercentList[goalIndex].splice(taskIndex, 1);
-                },
-
-                // Journal Logic
-                toggleJournalTask(idx) {
-                    this.currentEntry.tasks[idx].done = !this.currentEntry.tasks[idx].done;
-                },
-                getTimeblock(hour) {
-                    if (!this.currentEntry.timeblocks) this.currentEntry.timeblocks = {};
-                    if (!this.currentEntry.timeblocks[hour]) {
-                        this.currentEntry.timeblocks[hour] = { text: '', done: false };
-                    }
-                    return this.currentEntry.timeblocks[hour];
-                },
-                toggleTimeblock(hour) {
-                    const block = this.getTimeblock(hour);
-                    block.done = !block.done;
-                },
-
-                // Stats Logic
-                getStats() {
-                    const entries = Object.values(this.journalEntries);
-                    const daysLogged = entries.length;
-                    
-                    // Safe reduce
-                    let totalTasks = 0;
-                    let completedTasks = 0;
-                    
-                    entries.forEach(entry => {
-                        if(entry.tasks) {
-                            totalTasks += entry.tasks.length;
-                            completedTasks += entry.tasks.filter(t => t.done).length;
-                        }
-                    });
-
-                    const completionRate = totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100);
-                    return { daysLogged, completedTasks, completionRate };
-                }
-            };
-        }
     </script>
     <style>
         [x-cloak] { display: none !important; }
@@ -192,8 +61,136 @@
         }
     </style>
 </head>
+
+<!-- DIRECT APP LOGIC (Simplest Implementation) -->
 <body class="bg-slate-50 text-slate-700 antialiased min-h-screen flex flex-col font-sans"
-      x-data="quantumApp()">
+      x-data="{
+          activeTab: 'vision',
+          
+          // Data Models (Lazy Load)
+          vision: JSON.parse(localStorage.getItem('qp_vision')) || {},
+          goals: JSON.parse(localStorage.getItem('qp_goals')) || [
+              { title: '', why: '', progress: 0 },
+              { title: '', why: '', progress: 0 },
+              { title: '', why: '', progress: 0 }
+          ],
+          onePercentList: JSON.parse(localStorage.getItem('qp_one_percent')) || {},
+          journalEntries: JSON.parse(localStorage.getItem('qp_journal')) || {},
+          
+          // Temp Input for 1% Tasks
+          newTaskInput: { 0: '', 1: '', 2: '' },
+
+          // Timeblocking Hours
+          hours: [
+              '5:00 AM', '6:00 AM', '7:00 AM', '8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM',
+              '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM', '8:00 PM',
+              '9:00 PM', '10:00 PM', '11:00 PM', '12:00 AM'
+          ],
+
+          // Current Journal Entry State
+          currentEntry: null,
+          todayDate: new Date().toISOString().split('T')[0],
+
+          // Static Data
+          visionCards: [
+              { id: 'why', title: 'My Ultimate Why', icon: 'fa-solid fa-bullseye', colorClass: 'bg-red-100 text-red-500', desc: 'What pushes you when things get hard?' },
+              { id: 'motivation', title: 'Core Motivation', icon: 'fa-solid fa-bolt', colorClass: 'bg-yellow-100 text-yellow-500', desc: 'What energy source are you tapping into?' },
+              { id: 'legacy', title: 'My Legacy', icon: 'fa-solid fa-trophy', colorClass: 'bg-purple-100 text-purple-500', desc: 'How do you want to be remembered?' },
+              { id: 'vision', title: 'The 90-Day Vision', icon: 'fa-regular fa-calendar-check', colorClass: 'bg-blue-100 text-blue-500', desc: 'Success 90 days from today.' },
+          ],
+
+          // Initialization
+          init() {
+              // Initialize Today's Journal
+              if (!this.journalEntries[this.todayDate]) {
+                  this.journalEntries[this.todayDate] = {
+                      date: this.todayDate,
+                      tasks: [
+                          { done: false, text: '' },
+                          { done: false, text: '' },
+                          { done: false, text: '' }
+                      ],
+                      timeblocks: {},
+                      notes: ''
+                  };
+              }
+              this.currentEntry = this.journalEntries[this.todayDate];
+              
+              // Setup Watchers for Auto-Save
+              this.$watch('vision', val => localStorage.setItem('qp_vision', JSON.stringify(val)));
+              this.$watch('goals', val => localStorage.setItem('qp_goals', JSON.stringify(val)));
+              this.$watch('onePercentList', val => localStorage.setItem('qp_one_percent', JSON.stringify(val)));
+              this.$watch('currentEntry', val => {
+                  this.journalEntries[this.todayDate] = val;
+                  localStorage.setItem('qp_journal', JSON.stringify(this.journalEntries));
+              });
+          },
+
+          // Helper Functions
+          getGoalColor(index) {
+              return index === 0 ? 'bg-lumenis-primary' : index === 1 ? 'bg-lumenis-secondary' : 'bg-brand-purple';
+          },
+          getGoalBorderColor(index) {
+              return index === 0 ? 'border-lumenis-primary' : index === 1 ? 'border-lumenis-secondary' : 'border-brand-purple';
+          },
+          getGoalPlaceholder(index) {
+              if(index === 0) return 'e.g. Close $200k Revenue';
+              if(index === 1) return 'e.g. Run a Marathon';
+              return 'e.g. Read 10 Books';
+          },
+          getTodayDate() {
+              const options = { weekday: 'long', month: 'long', day: 'numeric' };
+              return new Date().toLocaleDateString('en-US', options);
+          },
+          
+          // 1% Tasks Logic
+          addTask(goalIndex) {
+              const text = this.newTaskInput[goalIndex];
+              if (!text) return;
+              if (!this.onePercentList[goalIndex]) this.onePercentList[goalIndex] = [];
+              this.onePercentList[goalIndex].push({ text: text, used: false });
+              this.newTaskInput[goalIndex] = ''; // Clear input
+          },
+          removeTask(goalIndex, taskIndex) {
+              this.onePercentList[goalIndex].splice(taskIndex, 1);
+          },
+
+          // Journal Logic
+          toggleJournalTask(idx) {
+              this.currentEntry.tasks[idx].done = !this.currentEntry.tasks[idx].done;
+          },
+          getTimeblock(hour) {
+              if (!this.currentEntry.timeblocks) this.currentEntry.timeblocks = {};
+              if (!this.currentEntry.timeblocks[hour]) {
+                  this.currentEntry.timeblocks[hour] = { text: '', done: false };
+              }
+              return this.currentEntry.timeblocks[hour];
+          },
+          toggleTimeblock(hour) {
+              const block = this.getTimeblock(hour);
+              block.done = !block.done;
+          },
+
+          // Stats Logic
+          getStats() {
+              const entries = Object.values(this.journalEntries);
+              const daysLogged = entries.length;
+              
+              // Safe reduce
+              let totalTasks = 0;
+              let completedTasks = 0;
+              
+              entries.forEach(entry => {
+                  if(entry.tasks) {
+                      totalTasks += entry.tasks.length;
+                      completedTasks += entry.tasks.filter(t => t.done).length;
+                  }
+              });
+
+              const completionRate = totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100);
+              return { daysLogged, completedTasks, completionRate };
+          }
+      }">
 
     <!-- NAVIGATION -->
     <nav class="bg-brand-navy text-white p-4 sticky top-0 z-50 shadow-xl border-b border-slate-700">
