@@ -32,34 +32,13 @@
                 }
             }
         }
-    </script>
-    <style>
-        [x-cloak] { display: none !important; }
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            height: 20px;
-            width: 20px;
-            border-radius: 50%;
-            background: #1B2A41;
-            cursor: pointer;
-            margin-top: -8px;
-        }
-        input[type=range]::-webkit-slider-runnable-track {
-            width: 100%;
-            height: 4px;
-            cursor: pointer;
-            background: #cbd5e1;
-            border-radius: 2px;
-        }
-    </style>
 
-    <!-- APP LOGIC (Global Function Pattern) -->
-    <script>
-        function quantumProtocolApp() {
+        // Global Function Pattern (Fixes ReferenceErrors)
+        function quantumApp() {
             return {
                 activeTab: 'vision',
                 
-                // Data Models
+                // Data Models (Lazy Load)
                 vision: JSON.parse(localStorage.getItem('qp_vision')) || {},
                 goals: JSON.parse(localStorage.getItem('qp_goals')) || [
                     { title: '', why: '', progress: 0 },
@@ -131,7 +110,8 @@
                     return "e.g. Read 10 Books";
                 },
                 getTodayDate() {
-                    return new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+                    const options = { weekday: 'long', month: 'long', day: 'numeric' };
+                    return new Date().toLocaleDateString('en-US', options);
                 },
                 
                 // 1% Tasks Logic
@@ -151,31 +131,69 @@
                     this.currentEntry.tasks[idx].done = !this.currentEntry.tasks[idx].done;
                 },
                 getTimeblock(hour) {
-                    // Ensure timeblock object exists
+                    if (!this.currentEntry.timeblocks) this.currentEntry.timeblocks = {};
                     if (!this.currentEntry.timeblocks[hour]) {
                         this.currentEntry.timeblocks[hour] = { text: '', done: false };
                     }
                     return this.currentEntry.timeblocks[hour];
                 },
                 toggleTimeblock(hour) {
-                    this.getTimeblock(hour).done = !this.getTimeblock(hour).done;
+                    const block = this.getTimeblock(hour);
+                    block.done = !block.done;
                 },
 
                 // Stats Logic
                 getStats() {
                     const entries = Object.values(this.journalEntries);
                     const daysLogged = entries.length;
-                    const totalTasks = entries.reduce((acc, entry) => acc + entry.tasks.length, 0);
-                    const completedTasks = entries.reduce((acc, entry) => acc + entry.tasks.filter(t => t.done).length, 0);
+                    
+                    // Safe reduce
+                    let totalTasks = 0;
+                    let completedTasks = 0;
+                    
+                    entries.forEach(entry => {
+                        if(entry.tasks) {
+                            totalTasks += entry.tasks.length;
+                            completedTasks += entry.tasks.filter(t => t.done).length;
+                        }
+                    });
+
                     const completionRate = totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100);
                     return { daysLogged, completedTasks, completionRate };
                 }
-            }
+            };
         }
     </script>
+    <style>
+        [x-cloak] { display: none !important; }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #1B2A41;
+            cursor: pointer;
+            margin-top: -8px;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #cbd5e1;
+            border-radius: 2px;
+        }
+        /* Hide scrollbar for tabs */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
 </head>
 <body class="bg-slate-50 text-slate-700 antialiased min-h-screen flex flex-col font-sans"
-      x-data="quantumProtocolApp()">
+      x-data="quantumApp()">
 
     <!-- NAVIGATION -->
     <nav class="bg-brand-navy text-white p-4 sticky top-0 z-50 shadow-xl border-b border-slate-700">

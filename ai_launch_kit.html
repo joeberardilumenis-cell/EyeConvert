@@ -7,20 +7,15 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        lumenis: {
-                            primary: '#008B9E', // Deep Teal
-                            secondary: '#4DD0E1', // Lighter Teal
-                            dark: '#006064',
-                        },
-                        brand: {
-                            navy: '#1B2A41',
-                            purple: '#6366f1', // AI Accent
-                        }
+                        lumenis: { primary: '#008B9E', secondary: '#4DD0E1' },
+                        brand: { navy: '#1B2A41', purple: '#6366f1' }
                     },
                     fontFamily: {
                         sans: ['Open Sans', 'sans-serif'],
@@ -29,8 +24,26 @@
                 }
             }
         }
+
+        // Global Function Pattern
+        function aiKit() {
+            return {
+                persona: 'doctor',
+                
+                setPersona(p) { this.persona = p; },
+                isPersona(p) { return this.persona === p; },
+                
+                copyToClipboard(elementId) {
+                    const text = document.getElementById(elementId).innerText;
+                    navigator.clipboard.writeText(text).then(() => {
+                        alert('Prompt copied!');
+                    }).catch(err => {
+                        console.error('Failed to copy: ', err);
+                    });
+                }
+            };
+        }
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
         [x-cloak] { display: none !important; }
         .gradient-text {
@@ -41,63 +54,67 @@
         }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-700 antialiased min-h-screen flex flex-col">
+<body class="bg-slate-50 text-slate-700 antialiased min-h-screen flex flex-col" x-data="aiKit()">
 
     <!-- HEADER -->
-    <header class="bg-white p-6 border-b-4 border-brand-purple shadow-sm sticky top-0 z-50">
+    <header class="bg-white p-4 md:p-6 border-b-4 border-brand-purple shadow-sm sticky top-0 z-50">
         <div class="max-w-5xl mx-auto flex justify-between items-center">
             <div class="flex items-center gap-3">
-                <img src="lumenis_logo.png" alt="EyeConvert Logo" class="h-10 md:h-12 w-auto object-contain">
+                <img src="lumenis_logo.png" alt="EyeConvert Logo" class="h-8 md:h-12 w-auto object-contain">
                 <div class="hidden md:block h-8 w-px bg-slate-200 mx-2"></div>
                 <h1 class="hidden md:block text-xl font-header font-bold text-brand-navy tracking-tight">AI Launch Kit</h1>
             </div>
-            <a href="index.html" class="text-sm font-bold text-brand-purple hover:text-brand-navy transition-colors">
-                <i class="fa-solid fa-arrow-left mr-2"></i> Back to Dashboard
+            <a href="index.html" class="text-xs md:text-sm font-bold text-brand-purple hover:text-brand-navy transition-colors flex items-center">
+                <i class="fa-solid fa-arrow-left mr-2"></i> Dashboard
             </a>
         </div>
     </header>
 
     <!-- MAIN CONTENT -->
-    <main class="flex-grow p-4 md:p-8" x-data="{ persona: 'doctor' }">
+    <main class="flex-grow p-4 md:p-8">
         <div class="max-w-5xl mx-auto">
 
             <!-- INTRO & TOGGLE -->
-            <div class="text-center mb-12">
-                <h2 class="text-3xl md:text-4xl font-header font-extrabold mb-4">
+            <div class="text-center mb-8 md:mb-12">
+                <h2 class="text-2xl md:text-4xl font-header font-extrabold mb-4 leading-tight">
                     High-Performance <span class="gradient-text">AI Prompts</span>
                 </h2>
-                <p class="text-slate-500 max-w-2xl mx-auto mb-8">
+                <p class="text-slate-500 max-w-2xl mx-auto mb-8 text-sm md:text-base">
                     Copy and paste these prompts into ChatGPT or Claude to simulate negotiations, train staff, and analyze revenue instantly.
                 </p>
 
                 <!-- Toggle Switch -->
-                <div class="inline-flex bg-slate-200 p-1.5 rounded-xl">
-                    <button @click="persona = 'doctor'" :class="persona === 'doctor' ? 'bg-white text-brand-navy shadow-md' : 'text-slate-500 hover:text-slate-700'" class="px-6 py-3 rounded-lg font-bold text-sm transition-all flex items-center gap-2">
+                <div class="inline-flex bg-slate-200 p-1.5 rounded-xl w-full md:w-auto">
+                    <button @click="setPersona('doctor')" 
+                            :class="isPersona('doctor') ? 'bg-white text-brand-navy shadow-md' : 'text-slate-500 hover:text-slate-700'" 
+                            class="flex-1 md:flex-none px-4 md:px-6 py-3 rounded-lg font-bold text-xs md:text-sm transition-all flex justify-center items-center gap-2">
                         <i class="fa-solid fa-user-doctor"></i> Practice Owner
                     </button>
-                    <button @click="persona = 'sales'" :class="persona === 'sales' ? 'bg-white text-brand-purple shadow-md' : 'text-slate-500 hover:text-slate-700'" class="px-6 py-3 rounded-lg font-bold text-sm transition-all flex items-center gap-2">
+                    <button @click="setPersona('sales')" 
+                            :class="isPersona('sales') ? 'bg-white text-brand-purple shadow-md' : 'text-slate-500 hover:text-slate-700'" 
+                            class="flex-1 md:flex-none px-4 md:px-6 py-3 rounded-lg font-bold text-xs md:text-sm transition-all flex justify-center items-center gap-2">
                         <i class="fa-solid fa-briefcase"></i> Sales Leader
                     </button>
                 </div>
             </div>
 
             <!-- DOCTOR TOOLS -->
-            <div x-show="persona === 'doctor'" class="grid gap-8" x-transition.opacity>
+            <div x-show="isPersona('doctor')" class="grid gap-6 md:gap-8" x-transition.opacity>
                 
                 <!-- Tool 1: Objection Handler -->
                 <div class="bg-white rounded-2xl shadow-lg border border-slate-100 overflow-hidden group">
-                    <div class="bg-brand-navy p-6 flex justify-between items-center text-white">
-                        <h3 class="font-bold text-xl flex items-center gap-3">
+                    <div class="bg-brand-navy p-4 md:p-6 flex justify-between items-center text-white">
+                        <h3 class="font-bold text-base md:text-xl flex items-center gap-3">
                             <i class="fa-solid fa-shield-halved text-lumenis-secondary"></i> The "Objection Destroyer"
                         </h3>
-                        <span class="text-xs font-bold uppercase tracking-wider bg-white/10 px-3 py-1 rounded-full">Training</span>
+                        <span class="text-[10px] font-bold uppercase tracking-wider bg-white/10 px-2 py-1 rounded-full">Training</span>
                     </div>
-                    <div class="p-8">
-                        <p class="text-slate-600 mb-6">Train your staff to handle price objections without hesitation. This prompt turns AI into a skeptical patient that refuses to break character until your staff wins.</p>
+                    <div class="p-5 md:p-8">
+                        <p class="text-slate-600 mb-6 text-sm md:text-base">Train your staff to handle price objections without hesitation. This prompt turns AI into a skeptical patient that refuses to break character until your staff wins.</p>
                         
                         <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 font-mono text-xs text-slate-600 mb-4 relative">
                             <p id="prompt-doc-1">"Act as a skeptical patient named 'Karen' sitting in an optometry chair. I am your technician recommending a $1,200 out-of-pocket dry eye treatment (OptiLight). You are resistant because of the cost and because 'eye drops are cheaper.' Do not accept my recommendation easily. Make me explain the VALUE over the cost. If I explain it well, agree. If I hesitate, push back harder. Start by saying: 'That sounds expensive, why can't I just keep using Visine?'"</p>
-                            <button onclick="copyToClipboard('prompt-doc-1')" class="absolute top-2 right-2 text-brand-purple hover:text-brand-navy font-bold text-xs bg-white px-2 py-1 rounded shadow-sm border border-slate-200">
+                            <button @click="copyToClipboard('prompt-doc-1')" class="absolute top-2 right-2 text-brand-purple hover:text-brand-navy font-bold text-xs bg-white px-2 py-1 rounded shadow-sm border border-slate-200 flex items-center gap-1">
                                 <i class="fa-regular fa-copy"></i> Copy
                             </button>
                         </div>
@@ -106,18 +123,18 @@
 
                 <!-- Tool 2: Visual Analogy Generator -->
                 <div class="bg-white rounded-2xl shadow-lg border border-slate-100 overflow-hidden group">
-                    <div class="bg-lumenis-primary p-6 flex justify-between items-center text-white">
-                        <h3 class="font-bold text-xl flex items-center gap-3">
+                    <div class="bg-lumenis-primary p-4 md:p-6 flex justify-between items-center text-white">
+                        <h3 class="font-bold text-base md:text-xl flex items-center gap-3">
                             <i class="fa-solid fa-lightbulb text-white"></i> The "Perfect Analogy" Maker
                         </h3>
-                        <span class="text-xs font-bold uppercase tracking-wider bg-white/10 px-3 py-1 rounded-full">Patient Ed</span>
+                        <span class="text-[10px] font-bold uppercase tracking-wider bg-white/10 px-2 py-1 rounded-full">Patient Ed</span>
                     </div>
-                    <div class="p-8">
-                        <p class="text-slate-600 mb-6">Stop using complex medical jargon. This prompt generates custom metaphors based on your patient's profession to make the diagnosis "click" instantly.</p>
+                    <div class="p-5 md:p-8">
+                        <p class="text-slate-600 mb-6 text-sm md:text-base">Stop using complex medical jargon. This prompt generates custom metaphors based on your patient's profession to make the diagnosis "click" instantly.</p>
                         
                         <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 font-mono text-xs text-slate-600 mb-4 relative">
                             <p id="prompt-doc-2">"I am an optometrist explaining Meibomian Gland Dysfunction (MGD) to a patient. The patient works as a [INSERT JOB, e.g., Car Mechanic]. Create a simple, powerful analogy using their specific job terminology to explain why their oil glands are clogged and why 'just adding water' (drops) won't fix the engine. Keep it under 3 sentences."</p>
-                            <button onclick="copyToClipboard('prompt-doc-2')" class="absolute top-2 right-2 text-lumenis-primary hover:text-brand-navy font-bold text-xs bg-white px-2 py-1 rounded shadow-sm border border-slate-200">
+                            <button @click="copyToClipboard('prompt-doc-2')" class="absolute top-2 right-2 text-lumenis-primary hover:text-brand-navy font-bold text-xs bg-white px-2 py-1 rounded shadow-sm border border-slate-200 flex items-center gap-1">
                                 <i class="fa-regular fa-copy"></i> Copy
                             </button>
                         </div>
@@ -126,18 +143,18 @@
 
                  <!-- Tool 3: Revenue Modeler -->
                  <div class="bg-white rounded-2xl shadow-lg border border-slate-100 overflow-hidden group">
-                    <div class="bg-slate-800 p-6 flex justify-between items-center text-white">
-                        <h3 class="font-bold text-xl flex items-center gap-3">
+                    <div class="bg-slate-800 p-4 md:p-6 flex justify-between items-center text-white">
+                        <h3 class="font-bold text-base md:text-xl flex items-center gap-3">
                             <i class="fa-solid fa-chart-line text-green-400"></i> The Profit Modeler
                         </h3>
-                        <span class="text-xs font-bold uppercase tracking-wider bg-white/10 px-3 py-1 rounded-full">Business</span>
+                        <span class="text-[10px] font-bold uppercase tracking-wider bg-white/10 px-2 py-1 rounded-full">Business</span>
                     </div>
-                    <div class="p-8">
-                        <p class="text-slate-600 mb-6">Visualize the ROI of the device. Input your patient volume, and let the AI build a text-based P&L statement for the dry eye clinic.</p>
+                    <div class="p-5 md:p-8">
+                        <p class="text-slate-600 mb-6 text-sm md:text-base">Visualize the ROI of the device. Input your patient volume, and let the AI build a text-based P&L statement for the dry eye clinic.</p>
                         
                         <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 font-mono text-xs text-slate-600 mb-4 relative">
                             <p id="prompt-doc-3">"Act as a medical practice consultant. I have 2,000 active patients. 20% likely have dry eye. I want to convert 5% of those dry eye patients into a $1,000 premium treatment package this year. Calculate: 1) Total potential revenue. 2) Monthly revenue if spread evenly. 3) How many patients I need to treat per week to hit this goal. Output as a clean table."</p>
-                            <button onclick="copyToClipboard('prompt-doc-3')" class="absolute top-2 right-2 text-slate-800 hover:text-brand-navy font-bold text-xs bg-white px-2 py-1 rounded shadow-sm border border-slate-200">
+                            <button @click="copyToClipboard('prompt-doc-3')" class="absolute top-2 right-2 text-slate-800 hover:text-brand-navy font-bold text-xs bg-white px-2 py-1 rounded shadow-sm border border-slate-200 flex items-center gap-1">
                                 <i class="fa-regular fa-copy"></i> Copy
                             </button>
                         </div>
@@ -147,22 +164,22 @@
             </div>
 
             <!-- SALES TOOLS -->
-            <div x-show="persona === 'sales'" class="grid gap-8" x-cloak x-transition.opacity>
+            <div x-show="isPersona('sales')" class="grid gap-6 md:gap-8" x-cloak x-transition.opacity>
                 
                 <!-- Tool 1: CFO Simulator -->
                 <div class="bg-white rounded-2xl shadow-lg border border-slate-100 overflow-hidden group">
-                    <div class="bg-brand-purple p-6 flex justify-between items-center text-white">
-                        <h3 class="font-bold text-xl flex items-center gap-3">
+                    <div class="bg-brand-purple p-4 md:p-6 flex justify-between items-center text-white">
+                        <h3 class="font-bold text-base md:text-xl flex items-center gap-3">
                             <i class="fa-solid fa-chess text-white"></i> The "CFO War Room"
                         </h3>
-                        <span class="text-xs font-bold uppercase tracking-wider bg-white/10 px-3 py-1 rounded-full">Negotiation</span>
+                        <span class="text-[10px] font-bold uppercase tracking-wider bg-white/10 px-2 py-1 rounded-full">Negotiation</span>
                     </div>
-                    <div class="p-8">
-                        <p class="text-slate-600 mb-6">Prepare for the toughest meeting of the year. This prompt creates a hostile CFO who only cares about EBITDA and ROI. Practice your financial defense.</p>
+                    <div class="p-5 md:p-8">
+                        <p class="text-slate-600 mb-6 text-sm md:text-base">Prepare for the toughest meeting of the year. This prompt creates a hostile CFO who only cares about EBITDA and ROI. Practice your financial defense.</p>
                         
                         <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 font-mono text-xs text-slate-600 mb-4 relative">
                             <p id="prompt-sales-1">"Act as a strict Hospital CFO. I am a sales rep trying to sell you a $120,000 capital equipment device for the Ophthalmology department. You do not care about 'patient outcomes'—you only care about ROI, payback period, and Section 179 tax implications. Grill me on the numbers. Start by asking: 'Why should I spend 120k on this when we're trying to cut costs?'"</p>
-                            <button onclick="copyToClipboard('prompt-sales-1')" class="absolute top-2 right-2 text-brand-purple hover:text-brand-navy font-bold text-xs bg-white px-2 py-1 rounded shadow-sm border border-slate-200">
+                            <button @click="copyToClipboard('prompt-sales-1')" class="absolute top-2 right-2 text-brand-purple hover:text-brand-navy font-bold text-xs bg-white px-2 py-1 rounded shadow-sm border border-slate-200 flex items-center gap-1">
                                 <i class="fa-regular fa-copy"></i> Copy
                             </button>
                         </div>
@@ -171,18 +188,18 @@
 
                 <!-- Tool 2: Outreach Engine -->
                 <div class="bg-white rounded-2xl shadow-lg border border-slate-100 overflow-hidden group">
-                    <div class="bg-brand-navy p-6 flex justify-between items-center text-white">
-                        <h3 class="font-bold text-xl flex items-center gap-3">
+                    <div class="bg-brand-navy p-4 md:p-6 flex justify-between items-center text-white">
+                        <h3 class="font-bold text-base md:text-xl flex items-center gap-3">
                             <i class="fa-solid fa-radar text-lumenis-secondary"></i> The "Hyper-Personalizer"
                         </h3>
-                        <span class="text-xs font-bold uppercase tracking-wider bg-white/10 px-3 py-1 rounded-full">Prospecting</span>
+                        <span class="text-[10px] font-bold uppercase tracking-wider bg-white/10 px-2 py-1 rounded-full">Prospecting</span>
                     </div>
-                    <div class="p-8">
-                        <p class="text-slate-600 mb-6">Never send a generic email again. Paste a doctor's bio or "About Us" page, and let AI find the perfect hook to start a conversation.</p>
+                    <div class="p-5 md:p-8">
+                        <p class="text-slate-600 mb-6 text-sm md:text-base">Never send a generic email again. Paste a doctor's bio or "About Us" page, and let AI find the perfect hook to start a conversation.</p>
                         
                         <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 font-mono text-xs text-slate-600 mb-4 relative">
                             <p id="prompt-sales-2">"I need to write a cold email to Dr. [Name]. Here is the text from their 'About Us' page: [PASTE TEXT]. Identify 2 specific things they mention (e.g., a specific technology they use or a philosophy they have) and write a 3-sentence opening hook that connects their philosophy to the concept of 'Restoring Lid Mechanics' without being salesy."</p>
-                            <button onclick="copyToClipboard('prompt-sales-2')" class="absolute top-2 right-2 text-brand-navy hover:text-lumenis-primary font-bold text-xs bg-white px-2 py-1 rounded shadow-sm border border-slate-200">
+                            <button @click="copyToClipboard('prompt-sales-2')" class="absolute top-2 right-2 text-brand-navy hover:text-lumenis-primary font-bold text-xs bg-white px-2 py-1 rounded shadow-sm border border-slate-200 flex items-center gap-1">
                                 <i class="fa-regular fa-copy"></i> Copy
                             </button>
                         </div>
@@ -191,18 +208,18 @@
 
                 <!-- Tool 3: Deal Strategy -->
                 <div class="bg-white rounded-2xl shadow-lg border border-slate-100 overflow-hidden group">
-                    <div class="bg-slate-800 p-6 flex justify-between items-center text-white">
-                        <h3 class="font-bold text-xl flex items-center gap-3">
+                    <div class="bg-slate-800 p-4 md:p-6 flex justify-between items-center text-white">
+                        <h3 class="font-bold text-base md:text-xl flex items-center gap-3">
                             <i class="fa-solid fa-microscope text-green-400"></i> The "Deal Autopsy"
                         </h3>
-                        <span class="text-xs font-bold uppercase tracking-wider bg-white/10 px-3 py-1 rounded-full">Strategy</span>
+                        <span class="text-[10px] font-bold uppercase tracking-wider bg-white/10 px-2 py-1 rounded-full">Strategy</span>
                     </div>
-                    <div class="p-8">
-                        <p class="text-slate-600 mb-6">Stuck deal? Use this prompt to analyze the situation like a VP of Sales and find the missing piece of the puzzle.</p>
+                    <div class="p-5 md:p-8">
+                        <p class="text-slate-600 mb-6 text-sm md:text-base">Stuck deal? Use this prompt to analyze the situation like a VP of Sales and find the missing piece of the puzzle.</p>
                         
                         <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 font-mono text-xs text-slate-600 mb-4 relative">
                             <p id="prompt-sales-3">"Act as an expert Enterprise Sales Coach. I have a deal stuck in the 'Verbal Agreement' stage for 3 weeks. The doctor wants it, but the practice administrator has gone silent. Ask me 3 strategic questions to uncover the roadblock, then suggest one specific 'Unsticking Email' to send to the administrator."</p>
-                            <button onclick="copyToClipboard('prompt-sales-3')" class="absolute top-2 right-2 text-slate-800 hover:text-brand-navy font-bold text-xs bg-white px-2 py-1 rounded shadow-sm border border-slate-200">
+                            <button @click="copyToClipboard('prompt-sales-3')" class="absolute top-2 right-2 text-slate-800 hover:text-brand-navy font-bold text-xs bg-white px-2 py-1 rounded shadow-sm border border-slate-200 flex items-center gap-1">
                                 <i class="fa-regular fa-copy"></i> Copy
                             </button>
                         </div>
@@ -215,18 +232,9 @@
     </main>
 
     <!-- FOOTER -->
-    <footer class="bg-slate-100 py-6 text-center text-slate-400 text-sm">
+    <footer class="bg-slate-100 py-6 text-center text-slate-400 text-xs">
         EyeConvert &copy; 2025 • AI Tools
     </footer>
-
-    <script>
-        function copyToClipboard(elementId) {
-            const text = document.getElementById(elementId).innerText;
-            navigator.clipboard.writeText(text).then(() => {
-                alert('Prompt copied to clipboard!');
-            });
-        }
-    </script>
 
 </body>
 </html>
