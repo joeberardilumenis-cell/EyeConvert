@@ -7,6 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    
+    <!-- Alpine.js (Loaded in Head) -->
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     
     <script>
@@ -24,27 +26,17 @@
                 }
             }
         }
-
-        // Global Function Pattern (Most Robust)
-        function scriptApp() {
-            return {
-                currentTab: 'combo',
-                role: 'doctor',
-                
-                // Helper to check active state for styling
-                isActiveTab(tab) { return this.currentTab === tab; },
-                isRole(r) { return this.role === r; }
-            };
-        }
     </script>
     <style>
         [x-cloak] { display: none !important; }
-        /* Hide scrollbar for clean mobile look */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-700 antialiased min-h-screen flex flex-col" x-data="scriptApp()">
+
+<!-- DIRECT APP LOGIC (Simplest Implementation) -->
+<body class="bg-slate-50 text-slate-700 antialiased min-h-screen flex flex-col" 
+      x-data="{ currentTab: 'combo', role: 'doctor' }">
 
     <!-- HEADER -->
     <header class="bg-white p-4 md:p-6 border-b-4 border-lumenis-primary shadow-sm sticky top-0 z-50">
@@ -67,20 +59,20 @@
             <!-- CONTROLS -->
             <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
                 
-                <!-- Treatment Tabs (Scrollable on Mobile) -->
+                <!-- Treatment Tabs -->
                 <div class="bg-white p-1 rounded-xl shadow-sm border border-slate-200 flex w-full md:w-auto overflow-x-auto no-scrollbar">
                     <button @click="currentTab = 'light'" 
-                            :class="isActiveTab('light') ? 'bg-lumenis-primary text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'" 
+                            :class="currentTab === 'light' ? 'bg-lumenis-primary text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'" 
                             class="flex-1 md:flex-none px-4 py-2 rounded-lg font-bold text-xs md:text-sm transition-all whitespace-nowrap">
                         OptiLight (IPL)
                     </button>
                     <button @click="currentTab = 'lift'" 
-                            :class="isActiveTab('lift') ? 'bg-lumenis-dark text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'" 
+                            :class="currentTab === 'lift' ? 'bg-lumenis-dark text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'" 
                             class="flex-1 md:flex-none px-4 py-2 rounded-lg font-bold text-xs md:text-sm transition-all whitespace-nowrap">
                         OptiLift (Toning)
                     </button>
                     <button @click="currentTab = 'combo'" 
-                            :class="isActiveTab('combo') ? 'bg-brand-navy text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'" 
+                            :class="currentTab === 'combo' ? 'bg-brand-navy text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'" 
                             class="flex-1 md:flex-none px-4 py-2 rounded-lg font-bold text-xs md:text-sm transition-all whitespace-nowrap">
                         Tri-Modality
                     </button>
@@ -89,12 +81,12 @@
                 <!-- Role Toggle -->
                 <div class="flex items-center gap-2 bg-slate-200 p-1 rounded-lg w-full md:w-auto">
                     <button @click="role = 'doctor'" 
-                            :class="isRole('doctor') ? 'bg-white text-brand-navy shadow-sm' : 'text-slate-500'" 
+                            :class="role === 'doctor' ? 'bg-white text-brand-navy shadow-sm' : 'text-slate-500'" 
                             class="flex-1 px-6 py-2 rounded-md text-xs font-bold uppercase tracking-wider transition-all flex justify-center items-center gap-2">
                         <i class="fa-solid fa-user-doctor"></i> Doctor
                     </button>
                     <button @click="role = 'staff'" 
-                            :class="isRole('staff') ? 'bg-white text-lumenis-primary shadow-sm' : 'text-slate-500'" 
+                            :class="role === 'staff' ? 'bg-white text-lumenis-primary shadow-sm' : 'text-slate-500'" 
                             class="flex-1 px-6 py-2 rounded-md text-xs font-bold uppercase tracking-wider transition-all flex justify-center items-center gap-2">
                         <i class="fa-solid fa-user-nurse"></i> Staff
                     </button>
@@ -115,23 +107,23 @@
                     </div>
                     <div class="p-5 md:p-8">
                         <!-- DOCTOR: Combo -->
-                        <div x-show="isRole('doctor') && isActiveTab('combo')">
+                        <div x-show="role === 'doctor' && currentTab === 'combo'">
                             <p class="text-base md:text-lg leading-relaxed text-slate-700 mb-4">"You have tried some early treatments to manage your symptoms, but to truly improve your eye health, we need to target the <span class="bg-yellow-100 px-1 font-bold text-slate-900">root causes</span>: chronic inflammation and poor blink function."</p>
                             <p class="text-base md:text-lg leading-relaxed text-slate-700">"Inflammation affects the glands that produce your tears, and weak blinking prevents proper tear distribution. This is a progressive condition that can impact your vision and quality of life."</p>
                         </div>
                          <!-- DOCTOR: Light -->
-                         <div x-show="isRole('doctor') && isActiveTab('light')" x-cloak>
+                         <div x-show="role === 'doctor' && currentTab === 'light'" x-cloak>
                             <p class="text-base md:text-lg leading-relaxed text-slate-700 mb-4">"We've tried initial treatments, but we need to address the root cause: <span class="bg-yellow-100 px-1 font-bold text-slate-900">chronic inflammation</span>. Left untreated, this damages the glands essential for healthy tears."</p>
                             <p class="text-base md:text-lg leading-relaxed text-slate-700">"Dry Eye isn't just discomfort—it's progressive. We need to stop the damage now."</p>
                         </div>
                         <!-- DOCTOR: Lift -->
-                        <div x-show="isRole('doctor') && isActiveTab('lift')" x-cloak>
+                        <div x-show="role === 'doctor' && currentTab === 'lift'" x-cloak>
                             <p class="text-base md:text-lg leading-relaxed text-slate-700 mb-4">"We need to address the strength of your <span class="bg-yellow-100 px-1 font-bold text-slate-900">blink</span>. Weak muscles disrupt the tear film."</p>
                             <p class="text-base md:text-lg leading-relaxed text-slate-700">"Every time you blink, you nourish the eye. A weak blink disrupts this. We need to restore that mechanical function."</p>
                         </div>
 
                         <!-- STAFF VERSION -->
-                        <div x-show="isRole('staff')" x-cloak>
+                        <div x-show="role === 'staff'" x-cloak>
                             <p class="text-base md:text-lg leading-relaxed text-slate-700 italic">"Dr. [Name] is recommending this because your dry eye isn't just a surface problem—it's coming from deeper inflammation and eyelid function. The drops are just a band-aid; this actually treats what's causing the issue."</p>
                         </div>
                     </div>
@@ -148,21 +140,21 @@
                     </div>
                     <div class="p-5 md:p-8">
                          <!-- DOCTOR: Combo -->
-                         <div x-show="isRole('doctor') && isActiveTab('combo')">
+                         <div x-show="role === 'doctor' && currentTab === 'combo'">
                             <p class="text-base md:text-lg leading-relaxed text-slate-700 mb-4">"We're going to take a <span class="bg-blue-100 px-1 font-bold text-brand-navy">dual approach</span>. OptiLight uses gentle light pulses to reduce inflammation and clear abnormal blood vessels."</p>
                             <p class="text-base md:text-lg leading-relaxed text-slate-700">"OptiLift then uses muscle stimulation to strengthen your blink. Together, they heal the surface and train your eyelids to function properly. Plus, most patients love the tighter, brighter skin around the eyes."</p>
                         </div>
                         <!-- DOCTOR: Light -->
-                        <div x-show="isRole('doctor') && isActiveTab('light')" x-cloak>
+                        <div x-show="role === 'doctor' && currentTab === 'light'" x-cloak>
                             <p class="text-base md:text-lg leading-relaxed text-slate-700">"OptiLight is a breakthrough that uses light energy to reduce inflammation and eliminate abnormal blood vessels. It’s non-invasive, quick, and treats the source rather than just masking symptoms."</p>
                         </div>
                          <!-- DOCTOR: Lift -->
-                         <div x-show="isRole('doctor') && isActiveTab('lift')" x-cloak>
+                         <div x-show="role === 'doctor' && currentTab === 'lift'" x-cloak>
                             <p class="text-base md:text-lg leading-relaxed text-slate-700">"OptiLift strengthens the muscles that control your eyelids so your blinking functions like it's supposed to. It is non-invasive, quick, and has a happy benefit—reducing eye bags and providing a lifted look."</p>
                         </div>
 
                         <!-- STAFF VERSION -->
-                        <div x-show="isRole('staff')" x-cloak>
+                        <div x-show="role === 'staff'" x-cloak>
                             <p class="text-base md:text-lg leading-relaxed text-slate-700 italic">"Think of it like physical therapy for your eyes (OptiLift) combined with a deep cleanse for the inflammation (OptiLight). It’s completely non-invasive, and honestly, patients love it because it often makes the skin around the eyes look fantastic too."</p>
                         </div>
                     </div>
@@ -178,10 +170,10 @@
                         <span class="text-[10px] md:text-xs font-bold uppercase tracking-wider text-slate-400">The "Validation"</span>
                     </div>
                     <div class="p-5 md:p-8">
-                        <div x-show="isRole('doctor')">
+                        <div x-show="role === 'doctor'">
                             <p class="text-base md:text-lg leading-relaxed text-slate-700">"I'm recommending this because you've already invested in your eye health, but we have a shot to <span class="font-bold text-lumenis-primary">treat this early</span>. This is the next step to rewind the clock and prevent progression. This is exactly how I treat all patients with your condition."</p>
                         </div>
-                        <div x-show="isRole('staff')" x-cloak>
+                        <div x-show="role === 'staff'" x-cloak>
                             <p class="text-base md:text-lg leading-relaxed text-slate-700 italic">"You are the perfect candidate for this because you're already doing the home care, but you need that extra boost to actually fix the problem. The patients who do this protocol are usually the ones who finally get off the constant eye drops."</p>
                         </div>
                     </div>
@@ -197,11 +189,11 @@
                         <span class="text-[10px] md:text-xs font-bold uppercase tracking-wider text-slate-400">The "Reality"</span>
                     </div>
                     <div class="p-5 md:p-8">
-                        <div x-show="isRole('doctor')">
+                        <div x-show="role === 'doctor'">
                             <p class="text-base md:text-lg leading-relaxed text-slate-700 mb-4">"We'll begin with four treatments spaced over a few weeks. Most patients notice improvement in comfort and clarity within the first few sessions."</p>
                             <p class="text-base md:text-lg leading-relaxed text-slate-700">"This treatment is <span class="font-bold text-red-500">not covered by insurance</span> because it is an advanced solution—but it is the best treatment for you."</p>
                         </div>
-                        <div x-show="isRole('staff')" x-cloak>
+                        <div x-show="role === 'staff'" x-cloak>
                             <p class="text-base md:text-lg leading-relaxed text-slate-700 italic mb-4">"It's a series of 4 visits. They are quick and easy. Since it’s a specialized advanced technology, insurance doesn't cover it yet, but we have financing options if needed."</p>
                             <p class="text-base md:text-lg leading-relaxed text-slate-700 italic">"The total investment for the restoration package is [Price], which covers all 4 sessions and your follow-up."</p>
                         </div>
