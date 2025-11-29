@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EyeConvert | Section 179</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { navy: '#1B2A41', green: '#10B981', gold: '#F59E0B' }
+                    },
+                    fontFamily: {
+                        sans: ['Open Sans', 'sans-serif'],
+                        header: ['Montserrat', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-50 text-slate-700 antialiased min-h-screen flex flex-col font-sans">
+
+    <!-- HEADER -->
+    <header class="bg-white p-4 md:p-6 border-b-4 border-brand-green shadow-sm sticky top-0 z-50">
+        <div class="max-w-5xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <img src="lumenis_logo.png" alt="EyeConvert Logo" class="h-8 md:h-12 w-auto object-contain">
+                <div class="hidden md:block h-8 w-px bg-slate-200 mx-2"></div>
+                <h1 class="hidden md:block text-xl font-header font-bold text-brand-navy tracking-tight">Section 179 Guide</h1>
+            </div>
+            <a href="index.html" class="text-xs md:text-sm font-bold text-brand-green hover:text-brand-navy transition-colors flex items-center">
+                <i class="fa-solid fa-arrow-left mr-2"></i> Dashboard
+            </a>
+        </div>
+    </header>
+
+    <!-- HERO -->
+    <div class="bg-brand-navy text-white py-12 text-center px-6">
+        <h2 class="text-3xl md:text-4xl font-header font-black mb-4">The "End of Year" Tax Hack</h2>
+        <p class="text-slate-300 max-w-2xl mx-auto text-lg">
+            How to use Section 179 to lower the net cost of your medical device by up to 35%. 
+            <br><span class="text-brand-green font-bold text-sm uppercase tracking-widest mt-2 block">Valid for 2025 Tax Year</span>
+        </p>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-grow p-4 md:p-8 -mt-8">
+        <div class="max-w-4xl mx-auto space-y-8">
+
+            <!-- THE MATH CARD -->
+            <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+                <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                    <span class="font-bold text-brand-navy uppercase text-sm tracking-wider">Example Calculation</span>
+                    <span class="bg-brand-green/10 text-brand-green text-xs font-bold px-2 py-1 rounded">35% Tax Bracket</span>
+                </div>
+                
+                <div class="p-8">
+                    <!-- Row 1 -->
+                    <div class="flex justify-between items-center mb-6 pb-6 border-b border-slate-100">
+                        <div>
+                            <p class="text-lg font-bold text-brand-navy">Equipment Cost</p>
+                            <p class="text-xs text-slate-400">Total Purchase Price</p>
+                        </div>
+                        <div class="text-2xl font-black text-brand-navy">$100,000</div>
+                    </div>
+
+                    <!-- Row 2 -->
+                    <div class="flex justify-between items-center mb-6 pb-6 border-b border-slate-100">
+                        <div>
+                            <p class="text-lg font-bold text-brand-navy flex items-center gap-2">
+                                <i class="fa-solid fa-minus-circle text-brand-green"></i> Tax Deduction
+                            </p>
+                            <p class="text-xs text-slate-400">Assumes 35% Bracket (Write-off)</p>
+                        </div>
+                        <div class="text-2xl font-black text-brand-green">-$35,000</div>
+                    </div>
+
+                    <!-- Total -->
+                    <div class="bg-brand-navy text-white p-6 rounded-xl flex justify-between items-center">
+                        <div>
+                            <p class="text-xl font-bold">True Net Cost</p>
+                            <p class="text-xs text-slate-400 uppercase tracking-widest">After Tax Savings</p>
+                        </div>
+                        <div class="text-4xl font-black">$65,000</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KEY FACTS -->
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-xl shadow-md border border-slate-100">
+                    <div class="w-10 h-10 bg-brand-gold/20 text-brand-gold rounded-full flex items-center justify-center text-xl mb-4"><i class="fa-solid fa-calendar-day"></i></div>
+                    <h3 class="font-bold text-brand-navy mb-2">Deadline</h3>
+                    <p class="text-sm text-slate-600">Equipment must be purchased and <strong>put into service</strong> by December 31st at 11:59 PM.</p>
+                </div>
+                
+                <div class="bg-white p-6 rounded-xl shadow-md border border-slate-100">
+                    <div class="w-10 h-10 bg-brand-green/20 text-brand-green rounded-full flex items-center justify-center text-xl mb-4"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+                    <h3 class="font-bold text-brand-navy mb-2">Limit</h3>
+                    <p class="text-sm text-slate-600">The deduction limit for 2025 is <strong>$1,220,000</strong>. This covers most private practice investments.</p>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-md border border-slate-100">
+                    <div class="w-10 h-10 bg-brand-navy/10 text-brand-navy rounded-full flex items-center justify-center text-xl mb-4"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+                    <h3 class="font-bold text-brand-navy mb-2">Financing</h3>
+                    <p class="text-sm text-slate-600">You can deduct the <strong>full price</strong> even if you finance it. This creates positive cash flow in Year 1.</p>
+                </div>
+            </div>
+
+            <!-- DISCLAIMER -->
+            <div class="text-center text-xs text-slate-400 max-w-lg mx-auto">
+                <p>Disclaimer: EyeConvert does not provide tax advice. Please consult your CPA or tax professional to confirm eligibility for your specific business situation.</p>
+            </div>
+
+        </div>
+    </main>
+
+    <footer class="bg-slate-100 py-6 text-center text-slate-400 text-xs mt-12">
+        EyeConvert &copy; 2025
+    </footer>
+
+</body>
+</html>

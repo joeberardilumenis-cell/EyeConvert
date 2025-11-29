@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EyeConvert | ROI Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        lumenis: { primary: '#008B9E', secondary: '#4DD0E1', dark: '#006064' },
+                        brand: { navy: '#1B2A41', green: '#10B981' }
+                    },
+                    fontFamily: {
+                        sans: ['Open Sans', 'sans-serif'],
+                        header: ['Montserrat', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #008B9E;
+            cursor: pointer;
+            margin-top: -8px;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #e2e8f0;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-700 antialiased min-h-screen flex flex-col font-sans">
+
+    <!-- HEADER -->
+    <header class="bg-white p-4 md:p-6 border-b-4 border-lumenis-primary shadow-sm sticky top-0 z-50">
+        <div class="max-w-5xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <img src="lumenis_logo.png" alt="EyeConvert Logo" class="h-8 md:h-12 w-auto object-contain">
+                <div class="hidden md:block h-8 w-px bg-slate-200 mx-2"></div>
+                <h1 class="hidden md:block text-xl font-header font-bold text-brand-navy tracking-tight">ROI Projector</h1>
+            </div>
+            <a href="index.html" class="text-xs md:text-sm font-bold text-lumenis-primary hover:text-brand-navy transition-colors flex items-center">
+                <i class="fa-solid fa-arrow-left mr-2"></i> Dashboard
+            </a>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-grow p-4 md:p-8">
+        <div class="max-w-4xl mx-auto">
+            
+            <div class="text-center mb-10">
+                <h2 class="text-3xl font-header font-extrabold text-brand-navy mb-3">Project Your Profitability</h2>
+                <p class="text-slate-500">See how quickly a Dry Eye implementation pays for itself.</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8">
+                
+                <!-- CONTROLS -->
+                <div class="bg-white p-8 rounded-2xl shadow-lg border border-slate-100 space-y-8">
+                    
+                    <!-- Slider 1 -->
+                    <div>
+                        <div class="flex justify-between mb-2">
+                            <label class="font-bold text-brand-navy text-sm uppercase tracking-wide">Daily Patients</label>
+                            <span class="font-bold text-lumenis-primary text-lg" id="display-patients">20</span>
+                        </div>
+                        <input type="range" min="5" max="60" value="20" id="input-patients" oninput="calculate()" class="w-full">
+                        <p class="text-xs text-slate-400 mt-1">Total patients seen per day (Medical + Routine)</p>
+                    </div>
+
+                    <!-- Slider 2 -->
+                    <div>
+                        <div class="flex justify-between mb-2">
+                            <label class="font-bold text-brand-navy text-sm uppercase tracking-wide">MGD Prevalence</label>
+                            <span class="font-bold text-lumenis-primary text-lg" id="display-prevalence">60%</span>
+                        </div>
+                        <input type="range" min="10" max="90" value="60" step="5" id="input-prevalence" oninput="calculate()" class="w-full">
+                        <p class="text-xs text-slate-400 mt-1">Percentage of patients with MGD signs (Industry avg: 60-80%)</p>
+                    </div>
+
+                    <!-- Slider 3 -->
+                    <div>
+                        <div class="flex justify-between mb-2">
+                            <label class="font-bold text-brand-navy text-sm uppercase tracking-wide">Conversion Rate</label>
+                            <span class="font-bold text-lumenis-primary text-lg" id="display-conversion">5%</span>
+                        </div>
+                        <input type="range" min="1" max="30" value="5" id="input-conversion" oninput="calculate()" class="w-full">
+                        <p class="text-xs text-slate-400 mt-1">Percent of identified patients who buy a package</p>
+                    </div>
+
+                    <!-- Price Input -->
+                    <div>
+                        <label class="font-bold text-brand-navy text-sm uppercase tracking-wide block mb-2">Package Price</label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
+                            <input type="number" value="1200" id="input-price" oninput="calculate()" class="w-full pl-8 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg font-bold text-brand-navy focus:outline-none focus:border-lumenis-primary">
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- RESULTS -->
+                <div class="bg-brand-navy text-white p-8 rounded-2xl shadow-xl flex flex-col justify-between relative overflow-hidden">
+                    <!-- Background Decor -->
+                    <div class="absolute top-0 right-0 w-64 h-64 bg-lumenis-primary/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+                    
+                    <div class="relative z-10 space-y-8">
+                        <div>
+                            <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">New Patients Per Month</p>
+                            <h3 class="text-4xl font-black text-white" id="result-patients">0</h3>
+                        </div>
+
+                        <div class="h-px bg-white/10 w-full"></div>
+
+                        <div>
+                            <p class="text-lumenis-secondary text-xs font-bold uppercase tracking-widest mb-1">Monthly Revenue</p>
+                            <h3 class="text-5xl font-black text-white" id="result-monthly">$0</h3>
+                        </div>
+
+                        <div>
+                            <p class="text-brand-green text-xs font-bold uppercase tracking-widest mb-1">Annual Revenue</p>
+                            <h3 class="text-4xl font-black text-brand-green" id="result-annual">$0</h3>
+                        </div>
+                    </div>
+
+                    <div class="mt-8 bg-white/10 p-4 rounded-xl relative z-10 border border-white/5">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-white text-brand-navy rounded-lg flex items-center justify-center text-xl"><i class="fa-solid fa-piggy-bank"></i></div>
+                            <div>
+                                <p class="text-[10px] uppercase font-bold text-slate-300">Device Payback</p>
+                                <p class="font-bold text-white text-sm">Pays off a $100k device in <span class="text-lumenis-secondary" id="result-payback">0</span> months.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function calculate() {
+            // Inputs
+            const patientsPerDay = parseInt(document.getElementById('input-patients').value);
+            const prevalence = parseInt(document.getElementById('input-prevalence').value) / 100;
+            const conversion = parseInt(document.getElementById('input-conversion').value) / 100;
+            const price = parseInt(document.getElementById('input-price').value);
+
+            // Display Updates
+            document.getElementById('display-patients').innerText = patientsPerDay;
+            document.getElementById('display-prevalence').innerText = (prevalence * 100) + '%';
+            document.getElementById('display-conversion').innerText = (conversion * 100) + '%';
+
+            // Logic
+            // Assuming 20 clinic days a month
+            const monthlyTotalPatients = patientsPerDay * 20; 
+            const mgdCandidates = monthlyTotalPatients * prevalence;
+            const convertedPatients = Math.round(mgdCandidates * conversion);
+            
+            const monthlyRevenue = convertedPatients * price;
+            const annualRevenue = monthlyRevenue * 12;
+            
+            // Payback (Assuming $100k cost)
+            const deviceCost = 100000;
+            const paybackMonths = monthlyRevenue > 0 ? (deviceCost / monthlyRevenue).toFixed(1) : '∞';
+
+            // Render Results
+            document.getElementById('result-patients').innerText = convertedPatients;
+            document.getElementById('result-monthly').innerText = '$' + monthlyRevenue.toLocaleString();
+            document.getElementById('result-annual').innerText = '$' + annualRevenue.toLocaleString();
+            document.getElementById('result-payback').innerText = paybackMonths;
+        }
+
+        // Init
+        calculate();
+    </script>
+
+</body>
+</html>
