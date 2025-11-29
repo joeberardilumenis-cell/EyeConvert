@@ -5,16 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quantum Protocol | 90-Day System</title>
     
-    <!-- TAILWIND CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- ALPINE.JS (For Interactivity) -->
-    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    
-    <!-- FONT AWESOME -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    
-    <!-- GOOGLE FONTS -->
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
 
     <script>
@@ -34,7 +26,6 @@
         }
     </script>
     <style>
-        [x-cloak] { display: none !important; }
         input[type=range]::-webkit-slider-thumb {
             -webkit-appearance: none;
             height: 20px;
@@ -51,154 +42,18 @@
             background: #cbd5e1;
             border-radius: 2px;
         }
-        /* Hide scrollbar for tabs */
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .hidden-tab { display: none; }
     </style>
 </head>
-
-<!-- DIRECT APP LOGIC (Simplest Implementation) -->
-<body class="bg-slate-50 text-slate-700 antialiased min-h-screen flex flex-col font-sans"
-      x-data="{
-          activeTab: 'vision',
-          
-          // Data Models (Lazy Load)
-          vision: JSON.parse(localStorage.getItem('qp_vision')) || {},
-          goals: JSON.parse(localStorage.getItem('qp_goals')) || [
-              { title: '', why: '', progress: 0 },
-              { title: '', why: '', progress: 0 },
-              { title: '', why: '', progress: 0 }
-          ],
-          onePercentList: JSON.parse(localStorage.getItem('qp_one_percent')) || {},
-          journalEntries: JSON.parse(localStorage.getItem('qp_journal')) || {},
-          
-          // Temp Input for 1% Tasks
-          newTaskInput: { 0: '', 1: '', 2: '' },
-
-          // Timeblocking Hours
-          hours: [
-              '5:00 AM', '6:00 AM', '7:00 AM', '8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM',
-              '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM', '8:00 PM',
-              '9:00 PM', '10:00 PM', '11:00 PM', '12:00 AM'
-          ],
-
-          // Current Journal Entry State
-          currentEntry: null,
-          todayDate: new Date().toISOString().split('T')[0],
-
-          // Static Data
-          visionCards: [
-              { id: 'why', title: 'My Ultimate Why', icon: 'fa-solid fa-bullseye', colorClass: 'bg-red-100 text-red-500', desc: 'What pushes you when things get hard?' },
-              { id: 'motivation', title: 'Core Motivation', icon: 'fa-solid fa-bolt', colorClass: 'bg-yellow-100 text-yellow-500', desc: 'What energy source are you tapping into?' },
-              { id: 'legacy', title: 'My Legacy', icon: 'fa-solid fa-trophy', colorClass: 'bg-purple-100 text-purple-500', desc: 'How do you want to be remembered?' },
-              { id: 'vision', title: 'The 90-Day Vision', icon: 'fa-regular fa-calendar-check', colorClass: 'bg-blue-100 text-blue-500', desc: 'Success 90 days from today.' },
-          ],
-
-          // Initialization
-          init() {
-              // Initialize Today's Journal
-              if (!this.journalEntries[this.todayDate]) {
-                  this.journalEntries[this.todayDate] = {
-                      date: this.todayDate,
-                      tasks: [
-                          { done: false, text: '' },
-                          { done: false, text: '' },
-                          { done: false, text: '' }
-                      ],
-                      timeblocks: {},
-                      notes: ''
-                  };
-              }
-              this.currentEntry = this.journalEntries[this.todayDate];
-              
-              // Setup Watchers for Auto-Save
-              this.$watch('vision', val => localStorage.setItem('qp_vision', JSON.stringify(val)));
-              this.$watch('goals', val => localStorage.setItem('qp_goals', JSON.stringify(val)));
-              this.$watch('onePercentList', val => localStorage.setItem('qp_one_percent', JSON.stringify(val)));
-              this.$watch('currentEntry', val => {
-                  this.journalEntries[this.todayDate] = val;
-                  localStorage.setItem('qp_journal', JSON.stringify(this.journalEntries));
-              });
-          },
-
-          // Helper Functions
-          getGoalColor(index) {
-              return index === 0 ? 'bg-lumenis-primary' : index === 1 ? 'bg-lumenis-secondary' : 'bg-brand-purple';
-          },
-          getGoalBorderColor(index) {
-              return index === 0 ? 'border-lumenis-primary' : index === 1 ? 'border-lumenis-secondary' : 'border-brand-purple';
-          },
-          getGoalPlaceholder(index) {
-              if(index === 0) return 'e.g. Close $200k Revenue';
-              if(index === 1) return 'e.g. Run a Marathon';
-              return 'e.g. Read 10 Books';
-          },
-          getTodayDate() {
-              const options = { weekday: 'long', month: 'long', day: 'numeric' };
-              return new Date().toLocaleDateString('en-US', options);
-          },
-          
-          // 1% Tasks Logic
-          addTask(goalIndex) {
-              const text = this.newTaskInput[goalIndex];
-              if (!text) return;
-              if (!this.onePercentList[goalIndex]) this.onePercentList[goalIndex] = [];
-              this.onePercentList[goalIndex].push({ text: text, used: false });
-              this.newTaskInput[goalIndex] = ''; // Clear input
-          },
-          removeTask(goalIndex, taskIndex) {
-              this.onePercentList[goalIndex].splice(taskIndex, 1);
-          },
-
-          // Journal Logic
-          toggleJournalTask(idx) {
-              this.currentEntry.tasks[idx].done = !this.currentEntry.tasks[idx].done;
-          },
-          getTimeblock(hour) {
-              if (!this.currentEntry.timeblocks) this.currentEntry.timeblocks = {};
-              if (!this.currentEntry.timeblocks[hour]) {
-                  this.currentEntry.timeblocks[hour] = { text: '', done: false };
-              }
-              return this.currentEntry.timeblocks[hour];
-          },
-          toggleTimeblock(hour) {
-              const block = this.getTimeblock(hour);
-              block.done = !block.done;
-          },
-
-          // Stats Logic
-          getStats() {
-              const entries = Object.values(this.journalEntries);
-              const daysLogged = entries.length;
-              
-              // Safe reduce
-              let totalTasks = 0;
-              let completedTasks = 0;
-              
-              entries.forEach(entry => {
-                  if(entry.tasks) {
-                      totalTasks += entry.tasks.length;
-                      completedTasks += entry.tasks.filter(t => t.done).length;
-                  }
-              });
-
-              const completionRate = totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100);
-              return { daysLogged, completedTasks, completionRate };
-          }
-      }">
+<body class="bg-slate-50 text-slate-700 antialiased min-h-screen flex flex-col font-sans">
 
     <!-- NAVIGATION -->
     <nav class="bg-brand-navy text-white p-4 sticky top-0 z-50 shadow-xl border-b border-slate-700">
         <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-gradient-to-br from-lumenis-primary to-brand-purple rounded-lg flex items-center justify-center font-black text-xl shadow-lg">
-                    QP
-                </div>
+                <div class="w-10 h-10 bg-gradient-to-br from-lumenis-primary to-brand-purple rounded-lg flex items-center justify-center font-black text-xl shadow-lg">QP</div>
                 <div>
                     <h1 class="font-header font-bold text-lg tracking-tight leading-none">Quantum Protocol</h1>
                     <p class="text-[10px] text-slate-400 font-bold tracking-wider uppercase mt-1">90-Day High Performance System</p>
@@ -206,16 +61,12 @@
             </div>
             
             <div class="flex bg-slate-800 p-1 rounded-lg overflow-x-auto w-full md:w-auto no-scrollbar">
-                <template x-for="tab in ['vision', 'goals', 'tasks', 'journal', 'review']">
-                    <button @click="activeTab = tab"
-                            :class="activeTab === tab ? 'bg-white text-brand-navy shadow-md transform scale-105' : 'text-slate-400 hover:text-white hover:bg-slate-700'"
-                            class="px-4 py-2 rounded-md text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap flex-1 md:flex-none">
-                        <span x-text="tab === 'tasks' ? '1% Tasks' : tab"></span>
-                    </button>
-                </template>
-                <a href="index.html" class="px-4 py-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-md text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap flex items-center gap-1">
-                    <i class="fa-solid fa-right-from-bracket"></i> Exit
-                </a>
+                <button onclick="setTab('vision')" id="nav-vision" class="px-4 py-2 rounded-md text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap flex-1 md:flex-none">Vision</button>
+                <button onclick="setTab('goals')" id="nav-goals" class="px-4 py-2 rounded-md text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap flex-1 md:flex-none">Goals</button>
+                <button onclick="setTab('tasks')" id="nav-tasks" class="px-4 py-2 rounded-md text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap flex-1 md:flex-none">1% Tasks</button>
+                <button onclick="setTab('journal')" id="nav-journal" class="px-4 py-2 rounded-md text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap flex-1 md:flex-none">Journal</button>
+                <button onclick="setTab('review')" id="nav-review" class="px-4 py-2 rounded-md text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap flex-1 md:flex-none">Review</button>
+                <a href="index.html" class="px-4 py-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-md text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap flex items-center gap-1"><i class="fa-solid fa-right-from-bracket"></i> Exit</a>
             </div>
         </div>
     </nav>
@@ -225,233 +76,344 @@
         <div class="max-w-6xl mx-auto">
 
             <!-- 1. VISION BOARD -->
-            <div x-show="activeTab === 'vision'" x-transition.opacity class="space-y-8">
+            <div id="tab-vision" class="tab-content space-y-8">
                 <div class="text-center max-w-2xl mx-auto mb-10">
                     <h2 class="text-3xl font-header font-black text-brand-navy mb-3">Define Your North Star</h2>
-                    <p class="text-slate-500">"He who has a why to live can bear almost any how." — Nietzsche. Define your foundation before you build your goals.</p>
+                    <p class="text-slate-500">"He who has a why to live can bear almost any how." — Nietzsche.</p>
                 </div>
-
-                <div class="grid md:grid-cols-2 gap-6">
-                    <template x-for="card in visionCards">
-                        <div class="bg-white p-6 rounded-xl shadow-lg border border-slate-100 hover:border-lumenis-secondary transition-colors group">
-                            <div class="flex items-center gap-3 mb-4">
-                                <div class="w-10 h-10 rounded-lg flex items-center justify-center text-xl transition-colors"
-                                     :class="card.colorClass">
-                                    <i :class="card.icon"></i>
-                                </div>
-                                <h3 class="font-header font-bold text-lg text-brand-navy" x-text="card.title"></h3>
-                            </div>
-                            <p class="text-xs text-slate-400 mb-3 font-bold uppercase tracking-wide" x-text="card.desc"></p>
-                            <textarea x-model="vision[card.id]" placeholder="Write deeply here..."
-                                      class="w-full h-32 p-4 bg-slate-50 rounded-lg border border-slate-200 focus:border-lumenis-primary focus:ring-2 focus:ring-lumenis-secondary/20 outline-none text-slate-700 text-sm leading-relaxed resize-none transition-all"></textarea>
-                        </div>
-                    </template>
+                <div class="grid md:grid-cols-2 gap-6" id="vision-container">
+                    <!-- Injected via JS -->
                 </div>
             </div>
 
             <!-- 2. GOAL ARCHITECT -->
-            <div x-show="activeTab === 'goals'" x-cloak x-transition.opacity class="space-y-8">
+            <div id="tab-goals" class="tab-content hidden-tab space-y-8">
                 <div class="text-center max-w-2xl mx-auto mb-10">
                     <h2 class="text-3xl font-header font-black text-brand-navy mb-3">The 3 Pillars</h2>
-                    <p class="text-slate-500">Set 3 SMART goals for the next 90 days. Be specific. Rate your current proximity to achieving them.</p>
+                    <p class="text-slate-500">Set 3 SMART goals for the next 90 days.</p>
                 </div>
-
-                <div class="grid lg:grid-cols-3 gap-6">
-                    <template x-for="(goal, index) in goals" :key="index">
-                        <div class="bg-white rounded-xl shadow-xl overflow-hidden border border-slate-100 flex flex-col h-full">
-                            <div class="h-2 w-full" :class="getGoalColor(index)"></div>
-                            <div class="p-6 flex-grow flex flex-col gap-4">
-                                <div class="flex justify-between items-center">
-                                    <span class="text-xs font-black text-slate-300 uppercase tracking-widest" x-text="'Goal 0' + (index + 1)"></span>
-                                    <i class="fa-solid fa-bullseye text-slate-300"></i>
-                                </div>
-                                
-                                <div>
-                                    <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Objective</label>
-                                    <input type="text" x-model="goal.title" :placeholder="getGoalPlaceholder(index)"
-                                           class="w-full p-3 bg-slate-50 rounded-lg border-none focus:ring-2 focus:ring-lumenis-secondary/50 font-bold text-brand-navy placeholder-slate-300 outline-none">
-                                </div>
-
-                                <div>
-                                    <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">The "Why"</label>
-                                    <textarea x-model="goal.why" placeholder="Why does this matter?"
-                                              class="w-full h-20 p-3 bg-slate-50 rounded-lg border-none focus:ring-2 focus:ring-lumenis-secondary/50 text-sm text-slate-600 resize-none placeholder-slate-300 outline-none"></textarea>
-                                </div>
-
-                                <div class="mt-auto pt-6 border-t border-slate-100">
-                                    <div class="flex justify-between text-xs font-bold text-slate-500 mb-2">
-                                        <span>Current Progress</span>
-                                        <span x-text="goal.progress + '/10'"></span>
-                                    </div>
-                                    <input type="range" min="0" max="10" x-model="goal.progress" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer">
-                                </div>
-                            </div>
-                        </div>
-                    </template>
+                <div class="grid lg:grid-cols-3 gap-6" id="goals-container">
+                    <!-- Injected via JS -->
                 </div>
             </div>
 
-            <!-- 3. 1% TASKS (Brainstorm) -->
-            <div x-show="activeTab === 'tasks'" x-cloak x-transition.opacity class="space-y-8">
+            <!-- 3. 1% TASKS -->
+            <div id="tab-tasks" class="tab-content hidden-tab space-y-8">
                 <div class="text-center max-w-2xl mx-auto mb-10">
                     <h2 class="text-3xl font-header font-black text-brand-navy mb-3">The 1% Inventory</h2>
-                    <p class="text-slate-500">Brainstorm small, actionable steps for each goal. When you journal daily, you can pull ideas from this list.</p>
+                    <p class="text-slate-500">Brainstorm small, actionable steps.</p>
                 </div>
-
-                <div class="grid lg:grid-cols-3 gap-6">
-                    <template x-for="(goal, index) in goals" :key="index">
-                        <div class="bg-white rounded-xl shadow-xl overflow-hidden border border-slate-100 flex flex-col h-full">
-                            <div class="h-2 w-full" :class="getGoalColor(index)"></div>
-                            <div class="p-6 flex-grow flex flex-col gap-4">
-                                <div class="flex justify-between items-center mb-2">
-                                    <span class="text-xs font-black text-slate-400 uppercase tracking-widest" x-text="'Goal 0' + (index + 1) + ' Tasks'"></span>
-                                    <i class="fa-solid fa-list text-slate-300"></i>
-                                </div>
-                                <h3 class="font-bold text-lg text-brand-navy mb-2 truncate" x-text="goal.title || 'Untitled Goal'"></h3>
-                                
-                                <!-- Input -->
-                                <div class="flex gap-2">
-                                    <input type="text" placeholder="Add a 1% task..." x-model="newTaskInput[index]" @keydown.enter="addTask(index)"
-                                           class="flex-grow p-2 bg-slate-50 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-lumenis-primary">
-                                    <button @click="addTask(index)" class="bg-slate-100 text-slate-600 p-2 rounded-lg hover:bg-slate-200">
-                                        <i class="fa-solid fa-plus"></i>
-                                    </button>
-                                </div>
-
-                                <!-- List -->
-                                <div class="space-y-2 max-h-64 overflow-y-auto pr-1">
-                                    <template x-for="(task, tIndex) in (onePercentList[index] || [])" :key="tIndex">
-                                        <div class="flex justify-between items-center bg-slate-50 p-3 rounded-lg border border-slate-100 group">
-                                            <span class="text-sm text-slate-700" x-text="task.text"></span>
-                                            <button @click="removeTask(index, tIndex)" class="text-slate-300 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all">
-                                                <i class="fa-solid fa-trash"></i>
-                                            </button>
-                                        </div>
-                                    </template>
-                                    <div x-show="!onePercentList[index] || onePercentList[index].length === 0" class="text-xs text-slate-400 text-center italic py-4">
-                                        No tasks added yet.
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </template>
+                <div class="grid lg:grid-cols-3 gap-6" id="tasks-container">
+                    <!-- Injected via JS -->
                 </div>
             </div>
 
-            <!-- 4. JOURNAL (Daily Log) -->
-            <div x-show="activeTab === 'journal'" x-cloak x-transition.opacity class="space-y-8">
+            <!-- 4. JOURNAL -->
+            <div id="tab-journal" class="tab-content hidden-tab space-y-8">
                 <div class="text-center mb-8">
                     <h2 class="text-3xl font-header font-black text-brand-navy mb-2">The 1% Engine</h2>
-                    <p class="text-slate-500">Small steps, compounded daily. What are the 3 non-negotiables for today?</p>
-                    <div class="mt-4 inline-block bg-blue-50 text-blue-600 px-4 py-1 rounded-full text-xs font-bold uppercase tracking-widest" x-text="getTodayDate()"></div>
+                    <p class="text-slate-500">Daily Non-Negotiables & Timeblocking</p>
+                    <div id="today-date" class="mt-4 inline-block bg-blue-50 text-blue-600 px-4 py-1 rounded-full text-xs font-bold uppercase tracking-widest"></div>
                 </div>
-
                 <div class="grid md:grid-cols-2 gap-8 items-start">
-                    <!-- Left: 1% Tasks -->
-                    <div class="space-y-6">
-                        <h3 class="font-bold text-brand-navy text-lg flex items-center gap-2">
-                            <i class="fa-solid fa-bullseye text-lumenis-primary"></i> Daily Non-Negotiables
-                        </h3>
-                        <div class="space-y-4">
-                            <template x-for="(task, idx) in currentEntry.tasks" :key="idx">
-                                <div class="relative bg-white p-4 rounded-xl shadow-md border-l-4 transition-all duration-300"
-                                     :class="task.done ? 'border-green-500 opacity-75' : getGoalBorderColor(idx)">
-                                    <div class="flex items-start gap-4">
-                                        <div class="mt-1">
-                                            <button @click="toggleJournalTask(idx)"
-                                                    class="w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors"
-                                                    :class="task.done ? 'bg-green-500 border-green-500 text-white' : 'border-slate-300 text-transparent hover:border-slate-400'">
-                                                <i class="fa-solid fa-check text-xs"></i>
-                                            </button>
-                                        </div>
-                                        <div class="flex-grow">
-                                            <div class="flex justify-between mb-2">
-                                                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400" x-text="'Linked to: ' + (goals[idx].title || 'Goal ' + (idx + 1))"></span>
-                                            </div>
-                                            <input type="text" x-model="task.text" placeholder="What is the 1% improvement?"
-                                                   class="w-full bg-transparent border-none p-0 text-slate-800 font-medium placeholder-slate-300 focus:ring-0 outline-none"
-                                                   :class="task.done ? 'line-through text-slate-400' : ''">
-                                        </div>
-                                    </div>
-                                </div>
-                            </template>
-                        </div>
-
-                        <!-- Reflection -->
+                    <div class="space-y-6" id="journal-tasks-container">
+                        <!-- Tasks Injected -->
                         <div class="bg-white p-6 rounded-xl shadow-lg border border-slate-100 mt-8">
-                            <h3 class="font-bold text-brand-navy mb-4 flex items-center gap-2">
-                                <span class="w-2 h-2 rounded-full bg-brand-navy"></span> Daily Reflection
-                            </h3>
-                            <textarea x-model="currentEntry.notes" placeholder="What went well? What did you learn? Brain dump your thoughts here..."
-                                      class="w-full h-48 p-4 bg-slate-50 rounded-lg border-none focus:ring-2 focus:ring-slate-200 text-sm text-slate-600 resize-none outline-none"></textarea>
+                            <h3 class="font-bold text-brand-navy mb-4">Daily Reflection</h3>
+                            <textarea id="journal-notes" oninput="saveNotes(this.value)" class="w-full h-48 p-4 bg-slate-50 rounded-lg border-none focus:ring-2 focus:ring-slate-200 text-sm text-slate-600 resize-none outline-none"></textarea>
                         </div>
                     </div>
-
-                    <!-- Right: Timeblocking -->
                     <div class="bg-white p-6 rounded-xl shadow-lg border border-slate-100">
-                        <h3 class="font-bold text-brand-navy text-lg mb-6 flex items-center gap-2">
-                            <i class="fa-regular fa-clock text-brand-purple"></i> Timeblocking
-                        </h3>
-                        <div class="space-y-2">
-                            <template x-for="hour in hours" :key="hour">
-                                <div class="flex items-center gap-3 group">
-                                    <span class="text-xs font-bold text-slate-400 w-16 text-right" x-text="hour"></span>
-                                    <div class="flex-grow flex items-center gap-3 p-2 rounded-lg border transition-all"
-                                         :class="getTimeblock(hour).done ? 'bg-slate-50 border-slate-200' : 'bg-white border-slate-100 hover:border-slate-300'">
-                                        <button @click="toggleTimeblock(hour)"
-                                                class="w-5 h-5 rounded border-2 flex items-center justify-center transition-colors flex-shrink-0"
-                                                :class="getTimeblock(hour).done ? 'bg-slate-400 border-slate-400 text-white' : 'border-slate-200 text-transparent hover:border-slate-400'">
-                                            <i class="fa-solid fa-check text-[10px]"></i>
-                                        </button>
-                                        <input type="text" x-model="getTimeblock(hour).text" placeholder="Focus block..."
-                                               class="w-full bg-transparent border-none p-0 text-sm text-slate-700 placeholder-slate-300 focus:ring-0 outline-none"
-                                               :class="getTimeblock(hour).done ? 'line-through text-slate-400' : ''">
-                                    </div>
-                                </div>
-                            </template>
+                        <h3 class="font-bold text-brand-navy text-lg mb-6"><i class="fa-regular fa-clock text-brand-purple"></i> Timeblocking</h3>
+                        <div class="space-y-2" id="timeblock-container">
+                            <!-- Timeblocks Injected -->
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- 5. REVIEW -->
-            <div x-show="activeTab === 'review'" x-cloak x-transition.opacity class="max-w-4xl mx-auto text-center space-y-12">
+            <div id="tab-review" class="tab-content hidden-tab max-w-4xl mx-auto text-center space-y-12">
                 <div>
                     <h2 class="text-3xl font-header font-black text-brand-navy mb-2">Weekly Pulse</h2>
                     <p class="text-slate-500">Your consistency score over time.</p>
                 </div>
-
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-                    <div class="bg-white p-6 rounded-2xl shadow-lg border border-slate-100">
-                        <div class="text-4xl font-black text-lumenis-primary mb-2" x-text="getStats().daysLogged"></div>
-                        <div class="text-xs font-bold uppercase tracking-wider text-slate-400">Days Logged</div>
-                    </div>
-                    <div class="bg-white p-6 rounded-2xl shadow-lg border border-slate-100">
-                        <div class="text-4xl font-black text-green-500 mb-2" x-text="getStats().completedTasks"></div>
-                        <div class="text-xs font-bold uppercase tracking-wider text-slate-400">1% Wins</div>
-                    </div>
-                    <div class="bg-white p-6 rounded-2xl shadow-lg border border-slate-100">
-                        <div class="text-4xl font-black text-brand-purple mb-2" x-text="getStats().completionRate + '%'"></div>
-                        <div class="text-xs font-bold uppercase tracking-wider text-slate-400">Execution Rate</div>
-                    </div>
-                    <div class="bg-white p-6 rounded-2xl shadow-lg border border-slate-100">
-                        <div class="text-4xl font-black text-brand-fire mb-2" x-text="90 - getStats().daysLogged"></div>
-                        <div class="text-xs font-bold uppercase tracking-wider text-slate-400">Days Left</div>
-                    </div>
-                </div>
-
-                <div x-show="getStats().daysLogged === 0" class="p-12 bg-slate-50 rounded-xl border border-dashed border-slate-300">
-                    <p class="text-slate-400 font-medium">No data yet. Start your first journal entry!</p>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-6" id="stats-container">
+                    <!-- Stats Injected -->
                 </div>
             </div>
 
         </div>
     </main>
 
-    <!-- FOOTER -->
     <footer class="text-center py-8 text-slate-400 text-xs font-bold uppercase tracking-widest">
         Quantum Protocol &copy; 2025
     </footer>
 
+    <!-- VANILLA JS LOGIC -->
+    <script>
+        // --- DATA STATE ---
+        let state = {
+            activeTab: 'vision',
+            vision: JSON.parse(localStorage.getItem('qp_vision')) || {},
+            goals: JSON.parse(localStorage.getItem('qp_goals')) || [
+                { title: '', why: '', progress: 0 }, { title: '', why: '', progress: 0 }, { title: '', why: '', progress: 0 }
+            ],
+            onePercentList: JSON.parse(localStorage.getItem('qp_one_percent')) || {},
+            journalEntries: JSON.parse(localStorage.getItem('qp_journal')) || {},
+            newTaskInputs: ['', '', '']
+        };
+
+        const todayDate = new Date().toISOString().split('T')[0];
+        const hours = ["5:00 AM", "6:00 AM", "7:00 AM", "8:00 AM", "9:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM", "5:00 PM", "6:00 PM", "7:00 PM", "8:00 PM", "9:00 PM", "10:00 PM", "11:00 PM", "12:00 AM"];
+
+        // Init Today's Entry if Missing
+        if (!state.journalEntries[todayDate]) {
+            state.journalEntries[todayDate] = {
+                date: todayDate,
+                tasks: [{ done: false, text: '' }, { done: false, text: '' }, { done: false, text: '' }],
+                timeblocks: {},
+                notes: ''
+            };
+        }
+
+        // --- RENDER FUNCTIONS ---
+
+        function renderTabs() {
+            ['vision', 'goals', 'tasks', 'journal', 'review'].forEach(tab => {
+                const btn = document.getElementById(`nav-${tab}`);
+                const content = document.getElementById(`tab-${tab}`);
+                
+                if(state.activeTab === tab) {
+                    btn.className = "bg-white text-brand-navy shadow-md transform scale-105 px-4 py-2 rounded-md text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap flex-1 md:flex-none";
+                    content.style.display = 'block';
+                } else {
+                    btn.className = "text-slate-400 hover:text-white hover:bg-slate-700 px-4 py-2 rounded-md text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap flex-1 md:flex-none";
+                    content.style.display = 'none';
+                }
+            });
+        }
+
+        function renderVision() {
+            const container = document.getElementById('vision-container');
+            const cards = [
+                { id: 'why', title: 'My Ultimate Why', icon: 'fa-bullseye', color: 'bg-red-100 text-red-500', desc: 'What pushes you?' },
+                { id: 'motivation', title: 'Core Motivation', icon: 'fa-bolt', color: 'bg-yellow-100 text-yellow-500', desc: 'Energy source?' },
+                { id: 'legacy', title: 'My Legacy', icon: 'fa-trophy', color: 'bg-purple-100 text-purple-500', desc: 'How to be remembered?' },
+                { id: 'vision', title: '90-Day Vision', icon: 'fa-calendar-check', color: 'bg-blue-100 text-blue-500', desc: 'Success in 90 days.' }
+            ];
+            
+            container.innerHTML = cards.map(c => `
+                <div class="bg-white p-6 rounded-xl shadow-lg border border-slate-100">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center text-xl ${c.color}"><i class="fa-solid ${c.icon}"></i></div>
+                        <h3 class="font-header font-bold text-lg text-brand-navy">${c.title}</h3>
+                    </div>
+                    <p class="text-xs text-slate-400 mb-3 font-bold uppercase">${c.desc}</p>
+                    <textarea oninput="updateVision('${c.id}', this.value)" class="w-full h-32 p-4 bg-slate-50 rounded-lg border border-slate-200 outline-none text-sm text-slate-700 resize-none">${state.vision[c.id] || ''}</textarea>
+                </div>
+            `).join('');
+        }
+
+        function renderGoals() {
+            const container = document.getElementById('goals-container');
+            container.innerHTML = state.goals.map((goal, i) => `
+                <div class="bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden flex flex-col h-full">
+                    <div class="h-2 w-full ${i===0?'bg-lumenis-primary':i===1?'bg-lumenis-secondary':'bg-brand-purple'}"></div>
+                    <div class="p-6 flex-grow flex flex-col gap-4">
+                        <div class="flex justify-between"><span class="text-xs font-black text-slate-300 uppercase">Goal 0${i+1}</span><i class="fa-solid fa-bullseye text-slate-300"></i></div>
+                        <div>
+                            <label class="text-xs font-bold text-slate-500 uppercase block mb-1">Objective</label>
+                            <input type="text" value="${goal.title}" oninput="updateGoal(${i}, 'title', this.value)" class="w-full p-3 bg-slate-50 rounded-lg font-bold text-brand-navy outline-none">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-slate-500 uppercase block mb-1">The Why</label>
+                            <textarea oninput="updateGoal(${i}, 'why', this.value)" class="w-full h-20 p-3 bg-slate-50 rounded-lg text-sm text-slate-600 resize-none outline-none">${goal.why}</textarea>
+                        </div>
+                        <div class="mt-auto pt-6 border-t border-slate-100">
+                            <div class="flex justify-between text-xs font-bold text-slate-500 mb-2"><span>Progress</span><span>${goal.progress}/10</span></div>
+                            <input type="range" min="0" max="10" value="${goal.progress}" oninput="updateGoal(${i}, 'progress', this.value)" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderTasks() {
+            const container = document.getElementById('tasks-container');
+            container.innerHTML = state.goals.map((goal, i) => `
+                <div class="bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden flex flex-col h-full">
+                    <div class="h-2 w-full ${i===0?'bg-lumenis-primary':i===1?'bg-lumenis-secondary':'bg-brand-purple'}"></div>
+                    <div class="p-6 flex-grow flex flex-col gap-4">
+                        <h3 class="font-bold text-lg text-brand-navy truncate">${goal.title || 'Untitled Goal'}</h3>
+                        <div class="flex gap-2">
+                            <input type="text" id="task-input-${i}" placeholder="Add task..." class="flex-grow p-2 bg-slate-50 rounded-lg border border-slate-200 text-sm outline-none">
+                            <button onclick="addTask(${i})" class="bg-slate-100 p-2 rounded-lg"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                        <div class="space-y-2 max-h-64 overflow-y-auto">
+                            ${(state.onePercentList[i] || []).map((t, ti) => `
+                                <div class="flex justify-between items-center bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                    <span class="text-sm text-slate-700">${t.text}</span>
+                                    <button onclick="removeTask(${i}, ${ti})" class="text-slate-300 hover:text-red-400"><i class="fa-solid fa-trash"></i></button>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderJournal() {
+            document.getElementById('today-date').innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+            
+            // Tasks
+            const tasksContainer = document.getElementById('journal-tasks-container');
+            let tasksHTML = `<h3 class="font-bold text-brand-navy text-lg flex items-center gap-2 mb-4"><i class="fa-solid fa-bullseye text-lumenis-primary"></i> Daily Non-Negotiables</h3>`;
+            
+            state.journalEntries[todayDate].tasks.forEach((task, i) => {
+                const borderClass = task.done ? 'border-green-500 opacity-75' : (i===0?'border-lumenis-primary':i===1?'border-lumenis-secondary':'border-brand-purple');
+                const btnClass = task.done ? 'bg-green-500 border-green-500 text-white' : 'border-slate-300 text-transparent';
+                const textClass = task.done ? 'line-through text-slate-400' : 'text-slate-800';
+                
+                tasksHTML += `
+                    <div class="relative bg-white p-4 rounded-xl shadow-md border-l-4 transition-all mb-4 ${borderClass}">
+                        <div class="flex items-start gap-4">
+                            <div class="mt-1">
+                                <button onclick="toggleJournalTask(${i})" class="w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors ${btnClass}"><i class="fa-solid fa-check text-xs"></i></button>
+                            </div>
+                            <div class="flex-grow">
+                                <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Linked to: ${state.goals[i].title || 'Goal '+(i+1)}</div>
+                                <input type="text" value="${task.text}" oninput="updateJournalTaskText(${i}, this.value)" placeholder="What is the 1% improvement?" class="w-full bg-transparent border-none p-0 font-medium outline-none ${textClass}">
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            // Add reflection box back
+            tasksHTML += `<div class="bg-white p-6 rounded-xl shadow-lg border border-slate-100 mt-8"><h3 class="font-bold text-brand-navy mb-4">Daily Reflection</h3><textarea oninput="saveNotes(this.value)" class="w-full h-48 p-4 bg-slate-50 rounded-lg border-none focus:ring-2 focus:ring-slate-200 text-sm text-slate-600 resize-none outline-none">${state.journalEntries[todayDate].notes || ''}</textarea></div>`;
+            
+            tasksContainer.innerHTML = tasksHTML;
+
+            // Timeblocks
+            const tbContainer = document.getElementById('timeblock-container');
+            const entryBlocks = state.journalEntries[todayDate].timeblocks || {};
+            
+            tbContainer.innerHTML = hours.map(h => {
+                const block = entryBlocks[h] || { text: '', done: false };
+                const bgClass = block.done ? 'bg-slate-50 border-slate-200' : 'bg-white border-slate-100';
+                const btnClass = block.done ? 'bg-slate-400 border-slate-400 text-white' : 'border-slate-200 text-transparent';
+                const textStyle = block.done ? 'line-through text-slate-400' : 'text-slate-700';
+                
+                return `
+                    <div class="flex items-center gap-3 group">
+                        <span class="text-xs font-bold text-slate-400 w-16 text-right">${h}</span>
+                        <div class="flex-grow flex items-center gap-3 p-2 rounded-lg border transition-all ${bgClass}">
+                            <button onclick="toggleTimeblock('${h}')" class="w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${btnClass}"><i class="fa-solid fa-check text-[10px]"></i></button>
+                            <input type="text" value="${block.text}" oninput="updateTimeblock('${h}', this.value)" placeholder="Focus block..." class="w-full bg-transparent border-none p-0 text-sm outline-none ${textStyle}">
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderReview() {
+            const entries = Object.values(state.journalEntries);
+            const daysLogged = entries.length;
+            let total = 0, completed = 0;
+            entries.forEach(e => {
+                if(e.tasks) {
+                    total += e.tasks.length;
+                    completed += e.tasks.filter(t => t.done).length;
+                }
+            });
+            const rate = total === 0 ? 0 : Math.round((completed/total)*100);
+
+            const container = document.getElementById('stats-container');
+            const statCard = (val, label, color) => `<div class="bg-white p-6 rounded-2xl shadow-lg border border-slate-100"><div class="text-4xl font-black ${color} mb-2">${val}</div><div class="text-xs font-bold uppercase tracking-wider text-slate-400">${label}</div></div>`;
+            
+            container.innerHTML = 
+                statCard(daysLogged, 'Days Logged', 'text-lumenis-primary') +
+                statCard(completed, '1% Wins', 'text-green-500') +
+                statCard(rate + '%', 'Execution Rate', 'text-brand-purple') +
+                statCard(90 - daysLogged, 'Days Left', 'text-brand-fire');
+        }
+
+        // --- ACTIONS ---
+
+        function setTab(tab) {
+            state.activeTab = tab;
+            renderTabs();
+            // Re-render specific tab content
+            if(tab === 'vision') renderVision();
+            if(tab === 'goals') renderGoals();
+            if(tab === 'tasks') renderTasks();
+            if(tab === 'journal') renderJournal();
+            if(tab === 'review') renderReview();
+        }
+
+        function saveData() {
+            localStorage.setItem('qp_vision', JSON.stringify(state.vision));
+            localStorage.setItem('qp_goals', JSON.stringify(state.goals));
+            localStorage.setItem('qp_one_percent', JSON.stringify(state.onePercentList));
+            localStorage.setItem('qp_journal', JSON.stringify(state.journalEntries));
+        }
+
+        // Specific updaters
+        window.updateVision = (id, val) => { state.vision[id] = val; saveData(); };
+        window.updateGoal = (i, field, val) => { state.goals[i][field] = val; saveData(); };
+        
+        window.addTask = (i) => {
+            const input = document.getElementById(`task-input-${i}`);
+            if(!input.value) return;
+            if(!state.onePercentList[i]) state.onePercentList[i] = [];
+            state.onePercentList[i].push({ text: input.value, used: false });
+            input.value = '';
+            saveData();
+            renderTasks();
+        };
+        
+        window.removeTask = (i, ti) => {
+            state.onePercentList[i].splice(ti, 1);
+            saveData();
+            renderTasks();
+        };
+
+        window.toggleJournalTask = (i) => {
+            state.journalEntries[todayDate].tasks[i].done = !state.journalEntries[todayDate].tasks[i].done;
+            saveData();
+            renderJournal();
+        };
+
+        window.updateJournalTaskText = (i, val) => {
+            state.journalEntries[todayDate].tasks[i].text = val;
+            saveData();
+        };
+
+        window.saveNotes = (val) => {
+            state.journalEntries[todayDate].notes = val;
+            saveData();
+        };
+
+        window.toggleTimeblock = (h) => {
+            if(!state.journalEntries[todayDate].timeblocks) state.journalEntries[todayDate].timeblocks = {};
+            if(!state.journalEntries[todayDate].timeblocks[h]) state.journalEntries[todayDate].timeblocks[h] = { text: '', done: false };
+            
+            state.journalEntries[todayDate].timeblocks[h].done = !state.journalEntries[todayDate].timeblocks[h].done;
+            saveData();
+            renderJournal();
+        };
+
+        window.updateTimeblock = (h, val) => {
+            if(!state.journalEntries[todayDate].timeblocks) state.journalEntries[todayDate].timeblocks = {};
+            if(!state.journalEntries[todayDate].timeblocks[h]) state.journalEntries[todayDate].timeblocks[h] = { text: '', done: false };
+            
+            state.journalEntries[todayDate].timeblocks[h].text = val;
+            saveData();
+        };
+
+        // Boot
+        renderTabs();
+        renderVision(); 
+    </script>
 </body>
 </html>
